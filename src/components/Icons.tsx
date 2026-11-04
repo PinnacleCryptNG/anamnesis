@@ -38,3 +38,27 @@ export function Arrow({ size = 18, className }: P) {
 export function LinkOut({ size = 14, className }: P) {
   return <svg {...base(size)} className={className}><path d="M9 5H5v14h14v-4M13 5h6v6M19 5l-8 8" /></svg>;
 }
+export function TodayIcon({ size, className }: P) {
+  return <svg {...base(size)} className={className}><path d="M3.5 17h17" /><path d="M7 17a5 5 0 0 1 10 0" /><path d="M12 6.5V8.5M5.6 9.6l1.4 1.4M18.4 9.6 17 11M3.5 20.5h10" opacity=".7" /></svg>;
+}
+export function TimelineIcon({ size, className }: P) {
+  return <svg {...base(size)} className={className}><path d="M7 3v18" /><circle cx="7" cy="6.5" r="1.8" fill="currentColor" stroke="none" /><circle cx="7" cy="12.5" r="1.8" /><circle cx="7" cy="18.5" r="1.8" /><path d="M11 6.5h8M11 12.5h6M11 18.5h7" /></svg>;
+}
+export function CameraIcon({ size, className }: P) {
+  return <svg {...base(size)} className={className}><path d="M4 8h3l1.6-2.5h6.8L17 8h3v11H4z" /><circle cx="12" cy="13" r="3.4" /><path d="M7 11h.01" strokeWidth="2.2" /></svg>;
+}
+export function CrossCardIcon({ size, className }: P) {
+  return <svg {...base(size)} className={className}><rect x="3" y="5.5" width="18" height="13" rx="2" /><path d="M8.5 9.5v5M6 12h5" /><path d="M14 10h4M14 13h3M14 16h2" opacity=".7" /></svg>;
+}
+export function QrIcon({ size, className }: P) {
+  return <svg {...base(size)} className={className}><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><path d="M14 14h2v2M20 14v6h-4M16 18v2" /></svg>;
+}
+export function StethIcon({ size, className }: P) {
+  return <svg {...base(size)} className={className}><path d="M6 3.5v5a4 4 0 0 0 8 0v-5" /><path d="M10 12.5v2.5a4.5 4.5 0 0 0 9 0v-2" /><circle cx="19" cy="11" r="2" /></svg>;
+}
+export function NibIcon({ size, className }: P) {
+  return <svg {...base(size)} className={className}><path d="M12 3l5 6-5 12-5-12z" /><path d="M12 13v8" /><circle cx="12" cy="11" r="1.3" /></svg>;
+}
+export function Plus({ size, className }: P) {
+  return <svg {...base(size)} className={className}><path d="M12 5v14M5 12h14" /></svg>;
+}

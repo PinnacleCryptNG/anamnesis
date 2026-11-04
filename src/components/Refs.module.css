@@ -1,0 +1,10 @@
+.wrap { position: relative; }
+.btn { background: none; border: 0; padding: 0 2px; cursor: pointer; }
+.btn:hover { text-decoration: underline; }
+.pop {
+  display: block; margin: 8px 0 4px; padding: 10px 12px; background: #fffdf6; border-left: 2px solid var(--oxblood);
+  font-size: 14px; line-height: 1.45; animation: unfold 260ms cubic-bezier(.2,.7,.2,1); transform-origin: top;
+}
+.src { display: block; padding: 3px 0; }
+.src + .src { border-top: 1px dashed var(--rule); }
+.src a { margin-left: 8px; color: var(--ink-soft); font-size: 11px; }

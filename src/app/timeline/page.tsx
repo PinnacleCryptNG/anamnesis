@@ -1,0 +1,103 @@
+"use client";
+import { useEffect, useMemo, useState } from "react";
+import AppShell from "@/components/AppShell";
+import Refs, { type Source } from "@/components/Refs";
+import { Kind } from "@/components/Entry";
+import { AskIcon } from "@/components/Icons";
+import { get, post } from "@/lib/api";
+import { useSession } from "@/lib/session";
+import u from "@/components/ui.module.css";
+import s from "./timeline.module.css";
+
+type E = { blobId: string; kind: string; date: string; body: string };
+const KINDS = ["all", "symptom", "medication", "reaction", "allergy", "diagnosis", "clinician", "measurement", "followup", "pattern"];
+
+export default function TimelinePage() {
+  const session = useSession();
+  const [entries, setEntries] = useState<E[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [kind, setKind] = useState("all");
+  const [text, setText] = useState("");
+  const [answer, setAnswer] = useState<{ answer: string; refs: number[]; sources: Source[] } | null>(null);
+  const [asking, setAsking] = useState(false);
+
+  useEffect(() => {
+    if (!session || session.mode === "none") return;
+    get<{ entries: E[] }>("/api/record").then((r) => {
+      if (r.error) setErr(r.error);
+      setEntries(r.entries ?? []);
+    });
+  }, [session]);
+
+  const groups = useMemo(() => {
+    const q = text.trim().toLowerCase();
+    const shown = (entries ?? []).filter((e) => (kind === "all" || e.kind === kind) && (!q || e.body.toLowerCase().includes(q)));
+    const byMonth = new Map<string, Map<string, E[]>>();
+    for (const e of shown) {
+      const m = e.date.slice(0, 7);
+      if (!byMonth.has(m)) byMonth.set(m, new Map());
+      const days = byMonth.get(m)!;
+      days.set(e.date, [...(days.get(e.date) ?? []), e]);
+    }
+    return [...byMonth.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([m, days]) => ({ m, days: [...days.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)) }));
+  }, [entries, kind, text]);
+
+  const ask = async () => {
+    if (text.trim().length < 2) return;
+    setAsking(true); setAnswer(null);
+    const r = await post<{ answer: string; refs: number[]; sources: Source[] }>("/api/ask", { q: text });
+    setAsking(false);
+    setAnswer(r.error ? { answer: r.error, refs: [], sources: [] } : r);
+  };
+
+  const month = (m: string) => new Date(m + "-15T12:00:00").toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", day: "numeric" });
+
+  return (
+    <AppShell title="Everything, in order." sub="Every fact on file, grouped by the day it happened. Type to filter, or ask the record a question in plain words.">
+      <div className={s.tools}>
+        <div className={s.search}>
+          <AskIcon size={20} />
+          <input value={text} onChange={(e) => { setText(e.target.value); setAnswer(null); }} onKeyDown={(e) => e.key === "Enter" && ask()} placeholder="Filter, or ask: when did the headaches start?" aria-label="Search or ask the record" />
+          <button className={u.ghost} onClick={ask} disabled={asking || text.trim().length < 2}>{asking ? <span className={u.loading} /> : "Ask"}</button>
+        </div>
+        <div className={s.kinds} role="tablist" aria-label="Filter by kind">
+          {KINDS.map((k) => (
+            <button key={k} className="mono" data-on={kind === k} onClick={() => setKind(k)} role="tab" aria-selected={kind === k}>{k}</button>
+          ))}
+        </div>
+      </div>
+
+      {answer && (
+        <section className={`${u.card} ${s.answer}`}>
+          <p>{answer.answer}<Refs refs={answer.refs ?? []} sources={answer.sources ?? []} /></p>
+        </section>
+      )}
+
+      {entries === null ? <p className={u.empty}><span className={u.loading} />Recalling from Walrus…</p>
+        : err ? <p className={u.err}>{err}</p>
+        : !groups.length ? <p className={u.empty}>{entries.length ? "Nothing matches that filter." : "Nothing filed yet."}</p>
+        : (
+          <div className={s.months}>
+            {groups.map(({ m, days }) => (
+              <section key={m} className={s.month}>
+                <h2 className="display">{month(m)}</h2>
+                {days.map(([d, list]) => (
+                  <div key={d} className={s.day}>
+                    <span className={`mono ${s.date}`}>{day(d)}</span>
+                    <ul>
+                      {list.map((e, i) => (
+                        <li key={e.blobId + i} className={e.kind === "pattern" ? s.pattern : undefined}>
+                          <Kind kind={e.kind} /> <span>{e.body}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </section>
+            ))}
+          </div>
+        )}
+    </AppShell>
+  );
+}

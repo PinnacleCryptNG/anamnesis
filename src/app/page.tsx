@@ -28,7 +28,7 @@ export default function Home() {
           <a href="#learns">How it learns</a>
           <a href="#brief">The brief</a>
           <a href="#proof">Proof</a>
-          <Link href="/record" className={s.navCta}>Open the record</Link>
+          <Link href="/start" className={s.navCta}>Start my record</Link>
         </nav>
       </header>
 
@@ -40,8 +40,8 @@ export default function Home() {
             symptom, dose and instruction as a memory you own, then writes the brief for your next appointment.
           </p>
           <div className={s.ctas}>
-            <Link href="/record" className={s.primary}>Open the demo record <Arrow /></Link>
-            <Link href="/brief" className={s.secondary}>Prepare a brief</Link>
+            <Link href="/start" className={s.primary}>Start my record <Arrow /></Link>
+            <Link href="/sample" className={s.secondary}>See a sample patient</Link>
           </div>
           <p className={s.fine}>Stored on Walrus Memory, verified on Sui through Tatum. It organises what you tell it and never diagnoses.</p>
         </div>
@@ -88,7 +88,7 @@ export default function Home() {
           <BriefIcon size={26} />
           <h2 className="display">Walk in with one page, <em>every line sourced.</em></h2>
           <p>Say what the appointment is for. Anamnesis recalls what matters and writes what changed, your current medicines, patterns across visits, questions to ask and what to raise. Each line cites the memories behind it, and the brief is filed too, so the next one knows what you already asked.</p>
-          <Link href="/brief" className={s.textLink}>Try it on the demo record <Arrow size={16} /></Link>
+          <Link href="/sample#brief" className={s.textLink}>Try it on the demo record <Arrow size={16} /></Link>
         </Reveal>
         <Reveal className={s.sheet}>
           <span className={`mono ${s.sheetFor}`}>Prepared for: 8-week neurology follow-up</span>
@@ -125,7 +125,7 @@ export default function Home() {
       <section className={s.closing}>
         <Reveal>
           <h2 className="display">Start with the last appointment <em>you remember.</em></h2>
-          <Link href="/record" className={s.primary}>Open the record <Arrow /></Link>
+          <Link href="/start" className={s.primary}>Start my record <Arrow /></Link>
         </Reveal>
       </section>
 

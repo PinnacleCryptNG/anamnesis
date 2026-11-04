@@ -3,7 +3,7 @@ import { z } from "zod";
 import { MemWal } from "@mysten-incubation/memwal";
 import { readAccount, type AccountProof } from "@/lib/account";
 import { completeJson } from "@/lib/llm";
-import { asLines, numbered, recallMany, today, type Ctx } from "@/lib/memory";
+import { asLines, numbered, recallMany, SAMPLE, today, type Ctx } from "@/lib/memory";
 import { openShare } from "@/lib/record";
 import { CLINICAL_SYSTEM, normalizeClinical } from "@/lib/clinical";
 
@@ -14,6 +14,7 @@ const Body = z.object({
   key: z.string().min(32).max(200).optional(),
   account: z.string().regex(/^0x[0-9a-f]{64}$/i).optional(),
   purpose: z.string().max(300).optional(),
+  sample: z.boolean().optional(),
 });
 
 const QUERIES = [
@@ -30,15 +31,20 @@ const QUERIES = [
 
 export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
-  if (!parsed.success || (!parsed.data.t && !parsed.data.key))
+  if (!parsed.success || (!parsed.data.t && !parsed.data.key && !parsed.data.sample))
     return NextResponse.json({ error: "This link is incomplete. Ask the patient to send it again." }, { status: 400 });
-  const { t, key, account, purpose } = parsed.data;
+  const { t, key, account, purpose, sample } = parsed.data;
   let ctx: Ctx;
   let who: string | undefined;
   let exp: number | null = null;
   let proof: AccountProof | null = null;
-  let via: "link" | "delegate";
-  if (t) {
+  let via: "link" | "delegate" | "sample";
+  if (sample) {
+    ctx = SAMPLE;
+    who = "Sample patient";
+    via = "sample";
+    proof = await readAccount().catch(() => null);
+  } else if (t) {
     const opened = await openShare(t, "doctor");
     if (opened instanceof NextResponse) return opened;
     ctx = opened.ctx;

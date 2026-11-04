@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import Folder from "@/components/Folder";
+import AppShell from "@/components/AppShell";
+import { get } from "@/lib/api";
+import { useSession } from "@/lib/session";
 import s from "../page.module.css";
 import l from "./ledger.module.css";
 
@@ -15,11 +17,12 @@ type Ledger = {
 const short = (v?: string | null, a = 8, b = 6) => (v ? `${v.slice(0, a)}…${v.slice(-b)}` : "—");
 
 export default function LedgerPage() {
+  const session = useSession();
   const [d, setD] = useState<Ledger | null>(null);
-  useEffect(() => { fetch("/api/ledger").then((r) => r.json()).then(setD); }, []);
+  useEffect(() => { if (session && session.mode !== "none") get<Ledger>("/api/ledger").then(setD); }, [session]);
   const a = d?.account;
   return (
-    <Folder title="Proof the file is yours." sub="Your record lives as Walrus blobs, paid for and indexed on Sui mainnet. This page reads the chain through Tatum's Sui gRPC gateway on every load, not from a cache.">
+    <AppShell title="Proof the file is yours." sub="Each memory is a Walrus blob, paid for and indexed on Sui mainnet. This page reads the chain through Tatum's Sui gRPC gateway on every load. A hosted record is its own sealed namespace inside the Anamnesis account; link your own Walrus account for a record only you control.">
       {!d ? <p className={s.empty}><span className={s.loading} /> Reading Sui mainnet through Tatum…</p> : (
         <>
           {a?.error ? <p className={s.err}>Account read failed: {a.error}</p> : (
@@ -27,13 +30,13 @@ export default function LedgerPage() {
               <div className={l.fact}><dt>Memory account</dt><dd className={l.small}>{short(a?.accountId, 12, 8)}<span className={l.seal}>✓</span></dd></div>
               <div className={l.fact}><dt>Owner</dt><dd className={l.small}>{short(a?.owner, 12, 8)}</dd></div>
               <div className={l.fact}><dt>Object version</dt><dd>{a?.version}</dd></div>
-              <div className={l.fact}><dt>Keys allowed to read</dt><dd>{a?.delegates?.length ?? 0}</dd></div>
+              <div className={l.fact}><dt>Delegate keys on account</dt><dd>{a?.delegates?.length ?? 0}</dd></div>
               <div className={l.fact}><dt>Walrus epoch</dt><dd>{a?.walrusEpoch ?? "—"}</dd></div>
               <div className={l.fact}><dt>Sui checkpoint</dt><dd>{a?.checkpoint ?? "—"}</dd></div>
             </dl>
           )}
           <section className={s.section}>
-            <h2>Stored blobs<span className={`mono ${s.count}`}>{d.memories.length} in “{d.namespace}”</span></h2>
+            <h2>Stored blobs<span className={`mono ${s.count}`}>{d.memories.length} in {d.namespace.startsWith("p_") ? "your private namespace" : `“${d.namespace}”`}</span></h2>
             {d.memoriesError && <p className={s.err}>{d.memoriesError}</p>}
             <table className={l.table}>
               <thead><tr><th>Walrus blob</th><th>Filed</th><th>Bytes</th><th>Paid through</th></tr></thead>
@@ -54,6 +57,6 @@ export default function LedgerPage() {
           </p>
         </>
       )}
-    </Folder>
+    </AppShell>
   );
 }
