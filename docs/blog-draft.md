@@ -11,11 +11,17 @@ Every new doctor starts with the same question: "So, what's your history?" Most 
 
 ## How it learns over time
 
-<!-- Fill in with real screenshots and numbers from the demo account -->
-- **Day 1:** the brief only repeats what you said.
-- **After a few visits:** it tracks dose changes and lists what's new since the last visit.
-- **After weeks:** intake recalls related history *before* filing. When a new note connects to the past, e.g. "nausea started three days after metformin went to 1000 mg", it files a `pattern` memory. Later recalls find that link directly instead of rediscovering it.
-- **Briefs remember briefs:** each brief is filed too, so the next one knows which questions you already asked and which are still open.
+The demo record is a migraine history, five months and six notes long, now 50 memories on mainnet. Here's what Anamnesis said back when each note was filed:
+
+- **June, first visit:** "This is your first entry, so no historical patterns yet." It only files what you said.
+- **July:** the GP says daily ibuprofen causes rebound headaches. Anamnesis connects that to June: "the ibuprofen you've been taking most days since at least June ... may explain why frequency stayed so high."
+- **August:** after two weeks on topiramate, headaches are "down to about 2 a week (a big drop from the 14 days recorded on 2026-07-24)". It knows the baseline because it recalled the July memory before filing.
+- **September:** three ibuprofen days in one week. It flags that this breaks "the 2-day limit Dr. Okafor set in July".
+- **October, neurology:** it files the switch to propranolol as "the final step in a chain that began with the cognitive side effects first noted after the dose increase back in August."
+
+That works because intake recalls related history *before* filing, and when a new note connects to the past it files a `pattern` memory. Later recalls find the link directly instead of working it out again.
+
+The brief for the 8-week neurology follow-up then asks whether the ECG was done, whether the word-finding trouble has cleared since stopping topiramate, and whether ibuprofen is staying under the limit. It also flags watching for wheeze on propranolol, given the childhood asthma. Each line cites the memories behind it. Briefs are filed too, so the next one knows which questions were already asked.
 
 ## How it uses Walrus Memory
 
