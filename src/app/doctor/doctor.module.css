@@ -1,0 +1,40 @@
+.page { min-height: 100vh; background: #f4efe2; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px clamp(16px, 4vw, 48px); border-bottom: 1px solid rgba(60,40,10,.14); background: var(--paper); position: sticky; top: 0; z-index: 5; }
+.whose { font-size: 14px; color: var(--ink-soft); text-align: right; }
+.whose b { color: var(--ink); font-weight: 500; }
+.main { max-width: 1120px; margin: 0 auto; padding: 32px clamp(16px, 4vw, 48px) 70px; }
+.stop { max-width: 640px; }
+.stop h1 { font-weight: 400; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.1; margin-bottom: 10px; }
+.summary p { font-size: clamp(22px, 2.6vw, 32px); line-height: 1.25; letter-spacing: -0.01em; max-width: 36ch; animation: slideIn 420ms; }
+.allergy { margin: 24px 0; padding: 14px 18px; border: 1.5px solid var(--k-allergy); border-radius: 4px; background: rgba(163,38,31,.05); }
+.allergy h2 { color: var(--k-allergy); margin-bottom: 4px; }
+.allergy ul { list-style: none; } .allergy li { font-weight: 600; }
+.meds { margin: 24px 0; padding: 24px; }
+.chart { margin-top: 18px; display: grid; gap: 4px; }
+.axis { position: relative; height: 18px; margin-left: 170px; margin-right: 40px; font-family: var(--f-mono), monospace; font-size: 11px; color: var(--ink-soft); }
+.axis span { position: absolute; transform: translateX(-50%); }
+.lane { display: grid; grid-template-columns: 160px 1fr 40px; gap: 10px; align-items: center; min-height: 44px; border-top: 1px solid var(--rule); }
+.drug { font-family: var(--f-display), serif; font-size: 17px; }
+.drug[data-stopped="true"] { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: rgba(125,35,32,.5); }
+.track { position: relative; height: 30px; }
+.track i { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--rule); }
+.seg {
+  position: absolute; top: 4px; height: 22px; border-radius: 3px; background: var(--k-medication); color: #f3f0e6; overflow: hidden;
+  display: flex; align-items: center; padding: 0 6px; transform-origin: left; animation: grow 700ms cubic-bezier(.2,.7,.2,1) backwards; animation-delay: calc(var(--j) * 120ms + 200ms);
+}
+.seg + .seg { background: #4f7f70; }
+.seg em { font-style: normal; font-family: var(--f-mono), monospace; font-size: 11px; white-space: nowrap; }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.grid { display: grid; gap: 22px 34px; }
+@media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+.block { animation: slideIn 420ms backwards; animation-delay: calc(var(--i) * 80ms); }
+.block ul { list-style: none; margin-top: 6px; }
+.block li { padding: 9px 0; border-bottom: 1px solid var(--rule); }
+.flags li { padding-left: 12px; border-left: 3px solid var(--k-reaction); margin-bottom: 4px; }
+.proof { display: flex; gap: 10px; align-items: flex-start; margin-top: 36px; padding-top: 16px; border-top: 1px solid rgba(60,40,10,.2); font-size: 14px; color: var(--ink-soft); }
+.about { margin-top: 26px; font-size: 14px; }
+@media (max-width: 700px) {
+  .axis { margin-left: 0; margin-right: 0; }
+  .lane { grid-template-columns: 1fr auto; gap: 4px 8px; padding: 8px 0; }
+  .track { grid-column: 1 / -1; grid-row: 2; }
+}
