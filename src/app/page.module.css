@@ -29,7 +29,8 @@
 .filter[data-on="true"] { color: var(--ink); border-color: var(--ink); }
 .empty { color: var(--ink-soft); font-style: italic; font-family: var(--f-display), serif; padding: 20px 0; }
 .askRow { display: flex; gap: 10px; }
-.ask { flex: 1; border: 0; border-bottom: 1.5px solid var(--ink); background: none; padding: 8px 2px; outline: 0; }
+.askRow > button { white-space: nowrap; flex: none; }
+.ask { flex: 1; min-width: 0; text-overflow: ellipsis; border: 0; border-bottom: 1.5px solid var(--ink); background: none; padding: 8px 2px; outline: 0; }
 .answer { margin-top: 14px; font-size: 18px; animation: slideIn 300ms; }
 .answer sup { color: var(--oxblood); font-family: var(--f-mono), monospace; font-size: 11px; margin-left: 2px; }
 .loading { display: inline-block; width: 46px; height: 2px; background: var(--ink); animation: pulseLine 900ms infinite; vertical-align: middle; }

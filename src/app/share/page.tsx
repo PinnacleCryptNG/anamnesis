@@ -9,6 +9,7 @@ import { forgetRecord, useSession } from "@/lib/session";
 import u from "@/components/ui.module.css";
 import s from "./share.module.css";
 
+const PENDING = "anamnesis.revoking";
 type Row = { id: string; scope: "doctor" | "emergency"; who: string; until: string | null; issued: string; revoked: boolean };
 const DAYS = [[1, "1 day"], [7, "1 week"], [30, "30 days"], [90, "3 months"]] as const;
 
@@ -26,7 +27,19 @@ export default function SharePage() {
   useEffect(() => setOrigin(window.location.origin), []);
   const qr = useQr(made?.url ?? null);
 
-  const load = useCallback(() => { if (hosted) get<{ shares: Row[] }>("/api/share").then((r) => setRows(r.shares ?? [])); }, [hosted]);
+  const [pending, setPending] = useState<string[]>([]);
+  useEffect(() => setPending(JSON.parse(localStorage.getItem(PENDING) || "[]")), []);
+  const keepPending = (ids: string[]) => { setPending(ids); localStorage.setItem(PENDING, JSON.stringify(ids)); };
+
+  const load = useCallback(() => {
+    if (!hosted) return;
+    get<{ shares: Row[] }>("/api/share").then((r) => {
+      const shares = r.shares ?? [];
+      setRows(shares);
+      const left = (JSON.parse(localStorage.getItem(PENDING) || "[]") as string[]).filter((id) => shares.some((x) => x.id === id && !x.revoked));
+      setPending(left); localStorage.setItem(PENDING, JSON.stringify(left));
+    });
+  }, [hosted]);
   useEffect(load, [load]);
 
   const create = async () => {
@@ -38,10 +51,13 @@ export default function SharePage() {
     setWho("");
     load();
   };
+  const [revoking, setRevoking] = useState<string | null>(null);
   const revoke = async (id: string) => {
-    setRows((cur) => cur?.map((x) => (x.id === id ? { ...x, revoked: true } : x)) ?? null);
+    setRevoking(id); setErr(null);
     const r = await post("/api/share", { action: "revoke", id });
-    if (r.error) { setErr(r.error); load(); }
+    setRevoking(null);
+    if (r.error) return setErr(r.error);
+    keepPending([...pending.filter((x) => x !== id), id]);
   };
   const copy = () => made && navigator.clipboard.writeText(made.url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); });
   const fmt = (d: string | null) => (d ? new Date(d + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "no end date");
@@ -87,15 +103,16 @@ export default function SharePage() {
               : (
                 <ul className={s.list}>
                   {rows.map((r) => {
-                    const ended = r.revoked || (r.until ? r.until < new Date().toISOString().slice(0, 10) : false);
+                    const revoked = r.revoked || pending.includes(r.id);
+                    const ended = revoked || (r.until ? r.until < new Date().toISOString().slice(0, 10) : false);
                     return (
                       <li key={r.id} data-off={ended}>
                         {r.scope === "emergency" ? <CrossCardIcon size={18} /> : <StethIcon size={18} />}
                         <div>
                           <b>{r.who || (r.scope === "emergency" ? "Emergency card" : "Doctor link")}</b>
-                          <span>{r.revoked ? "Revoked" : ended ? `Ended ${fmt(r.until)}` : r.until ? `Until ${fmt(r.until)}` : "No end date"}</span>
+                          <span>{revoked ? "Revoked" : ended ? `Ended ${fmt(r.until)}` : r.until ? `Until ${fmt(r.until)}` : "No end date"}</span>
                         </div>
-                        {!ended && <button className={s.small} onClick={() => revoke(r.id)}>Revoke</button>}
+                        {!ended && <button className={s.small} onClick={() => revoke(r.id)} disabled={revoking !== null}>{revoking === r.id ? "Revoking…" : "Revoke"}</button>}
                       </li>
                     );
                   })}
