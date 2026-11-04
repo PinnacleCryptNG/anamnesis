@@ -40,7 +40,7 @@ export function dropAddressed<T extends Cited>(items: T[], sources: Src[]): T[] 
     return !matters.some((m) => {
       if (cited.some((s) => after(s, m))) return false;
       if (norm(it.text) === m.key) return true;
-      if (!cited.length || !m.src.size || !cited.every((s) => m.src.has(srcKey(s.blobId)))) return false;
+      if (!it.refs.length || !m.src.size || !cited.every((s) => m.src.has(srcKey(s.blobId)))) return false;
       const shared = [...w].filter((x) => m.words.has(x)).length;
       return shared >= 2 && shared / Math.max(1, Math.min(w.size, m.words.size)) >= 0.5;
     });
