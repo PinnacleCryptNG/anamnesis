@@ -6,7 +6,7 @@ import { completeJson } from "@/lib/llm";
 import { asLines, numbered, recallMany, SAMPLE, today, type Ctx } from "@/lib/memory";
 import { openShare, reviewTag } from "@/lib/record";
 import { CLINICAL_SYSTEM, normalizeClinical } from "@/lib/clinical";
-import { dropAddressed } from "@/lib/reviews";
+import { dropAddressed, srcKey } from "@/lib/reviews";
 
 export const maxDuration = 60;
 
@@ -88,7 +88,10 @@ export async function POST(req: Request) {
       clinical,
       sources,
       reviewTags: shareId
-        ? Object.fromEntries([...clinical.flags, ...clinical.questions].map((x) => [x.text, reviewTag(shareId!, x.text)]))
+        ? Object.fromEntries([...clinical.flags, ...clinical.questions].map((x) => [
+            x.text,
+            reviewTag(shareId!, x.text, x.refs.map((n) => srcKey(sources[n - 1]?.blobId)).filter(Boolean)),
+          ]))
         : undefined,
       proof: proof && { accountId: proof.accountId, version: proof.version, checkpoint: proof.checkpoint, walrusEpoch: proof.walrusEpoch, checkedAt: proof.checkedAt },
     });

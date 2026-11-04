@@ -1,6 +1,6 @@
 import type { Cited } from "./cite";
 
-type Src = { n: number; kind: string; date: string; body: string };
+type Src = { n: number; kind: string; date: string; body: string; blobId?: string; writtenAt?: string };
 
 const STOP = new Set(
   "patient patients reports reported report since started starting begin began beginning approximately about after before weeks week days with from that this have been their there were which while also still being raise raising next visit worth asked wants whether doctor".split(" "),
@@ -8,27 +8,39 @@ const STOP = new Set(
 
 const words = (s: string) =>
   new Set((s.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) ?? []).map((w) => w.replace(/s$/, "")).filter((w) => !STOP.has(w)));
+const norm = (s: string) => s.toLowerCase().replace(/["']/g, "").replace(/\s+/g, " ").trim();
+export const srcKey = (blobId?: string) => (blobId || "").slice(0, 8);
 
-/** Items whose latest doctor review says "addressed", from the review memories among the sources. */
+/** Items whose latest doctor review says "addressed", with the source memories the reviewed item cited. */
 export function addressedMatters(sources: Src[]) {
-  const latest = new Map<string, { verdict: string; date: string }>();
-  for (const s of sources.filter((x) => x.kind === "review").sort((a, b) => a.date.localeCompare(b.date))) {
-    const m = s.body.match(/reviewed "(.+)" and marked it (addressed|keep watching)/);
-    if (m) latest.set(m[1], { verdict: m[2], date: s.date });
+  const latest = new Map<string, { verdict: string; date: string; at: string; src: Set<string>; words: Set<string> }>();
+  const order = (s: Src) => `${s.date} ${s.writtenAt ?? ""}`;
+  for (const s of sources.filter((x) => x.kind === "review").sort((a, b) => order(a).localeCompare(order(b)))) {
+    const m = s.body.match(/reviewed "(.+?)" and marked it (addressed|keep watching)/);
+    if (!m) continue;
+    const src = new Set((s.body.match(/Sources: ([A-Za-z0-9_\-, ]+)\./)?.[1] ?? "").split(/[,\s]+/).filter(Boolean));
+    latest.set(norm(m[1]), { verdict: m[2], date: s.date, at: s.writtenAt ?? "", src, words: words(m[1]) });
   }
-  return [...latest].filter(([, v]) => v.verdict === "addressed").map(([item, v]) => ({ words: words(item), date: v.date }));
+  return [...latest].filter(([, v]) => v.verdict === "addressed").map(([key, v]) => ({ key, ...v }));
 }
 
-/** Drops open items a doctor marked addressed, unless the item cites something recorded after that review. */
+/**
+ * Drops open items a doctor marked addressed: the same item, or one resting only on the memories the reviewed
+ * item cited and describing the same matter. Anything citing a memory filed after the review stays.
+ */
 export function dropAddressed<T extends Cited>(items: T[], sources: Src[]): T[] {
   const matters = addressedMatters(sources);
   if (!matters.length) return items;
   const byN = new Map(sources.map((s) => [s.n, s]));
+  const after = (s: Src, m: { date: string; at: string }) =>
+    s.date > m.date || (s.date === m.date && (!s.writtenAt || !m.at || s.writtenAt > m.at));
   return items.filter((it) => {
-    const w = words(it.text);
     const cited = it.refs.map((n) => byN.get(n)).filter((s): s is Src => !!s && s.kind !== "review");
+    const w = words(it.text);
     return !matters.some((m) => {
-      if (cited.some((s) => s.date > m.date)) return false;
+      if (cited.some((s) => after(s, m))) return false;
+      if (norm(it.text) === m.key) return true;
+      if (!cited.length || !m.src.size || !cited.every((s) => m.src.has(srcKey(s.blobId)))) return false;
       const shared = [...w].filter((x) => m.words.has(x)).length;
       return shared >= 2 && shared / Math.max(1, Math.min(w.size, m.words.size)) >= 0.5;
     });

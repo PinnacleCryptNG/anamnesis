@@ -49,18 +49,22 @@ const secret = () =>
 const sign = (body: string) => createHmac("sha256", secret()).update(body).digest("base64url").slice(0, 32);
 
 /** Binds a doctor's review to an item the doctor view actually showed on this link. */
-export const reviewTag = (shareId: string, item: string, at = Date.now()) => {
+export const reviewTag = (shareId: string, item: string, src: string[], at = Date.now()) => {
   const t = at.toString(36);
-  return `${t}.${sign(`review:${shareId}:${t}:${item}`)}`;
+  const s = src.join("~");
+  return `${t}.${s}.${sign(`review:${shareId}:${t}:${s}:${item}`)}`;
 };
 
 const REVIEW_TTL = 6 * 3600_000;
-export function checkReviewTag(shareId: string, item: string, tag: string): boolean {
-  const at = parseInt(tag.split(".")[0], 36);
-  if (!Number.isFinite(at) || Date.now() - at > REVIEW_TTL || at > Date.now() + 60_000) return false;
-  const want = Buffer.from(reviewTag(shareId, item, at));
+/** The cited source keys the tag was issued with, or null if it is forged, for another item, or expired. */
+export function checkReviewTag(shareId: string, item: string, tag: string): string[] | null {
+  const [t, s = ""] = tag.split(".");
+  const at = parseInt(t, 36);
+  if (!Number.isFinite(at) || Date.now() - at > REVIEW_TTL || at > Date.now() + 60_000) return null;
+  const src = s ? s.split("~") : [];
+  const want = Buffer.from(reviewTag(shareId, item, src, at));
   const got = Buffer.from(tag);
-  return want.length === got.length && timingSafeEqual(want, got);
+  return want.length === got.length && timingSafeEqual(want, got) ? src : null;
 }
 
 export const newShareId = () => randomBytes(6).toString("hex");

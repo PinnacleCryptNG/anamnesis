@@ -25,7 +25,7 @@ export function blobIdFromU256(dec: string): string {
 
 type BlobJson = { blob_id: string; size: string | number; registered_epoch: number; certified_epoch: number | null; storage: { end_epoch: number } };
 
-const cache = new Map<string, { at: number; blobs: Map<string, BlobProof>; complete: boolean }>();
+const cache = new Map<string, { at: number; blobs: Map<string, BlobProof>; complete: boolean; cursor: string | null }>();
 const TTL = 60_000;
 const MAX_PAGES = 200;
 
@@ -34,13 +34,15 @@ export async function ownedBlobs(
   owner: string,
   opts: { fresh?: boolean; want?: string[]; budgetMs?: number } = {},
 ): Promise<{ blobs: Map<string, BlobProof>; complete: boolean; cached?: boolean }> {
-  const hit = cache.get(owner);
-  if (hit && !opts.fresh && Date.now() - hit.at < TTL) return { ...hit, cached: true };
+  const hit = !opts.fresh && cache.get(owner);
+  const live = hit && Date.now() - hit.at < TTL ? hit : null;
+  if (live && (live.complete || opts.want?.every((id) => live.blobs.has(id)))) return { blobs: live.blobs, complete: true, cached: true };
   const stopAt = Date.now() + (opts.budgetMs ?? 12_000);
   const sui = tatumSui();
-  const blobs = new Map<string, BlobProof>();
-  let cursor: string | null = null;
+  const blobs = live ? live.blobs : new Map<string, BlobProof>();
+  let cursor: string | null = live ? live.cursor : null;
   let complete = false;
+  const keep = () => cache.set(owner, { at: live ? live.at : Date.now(), blobs, complete, cursor });
   for (let page = 0; page < MAX_PAGES; page++) {
     const r = await throttled(() =>
       sui.listOwnedObjects({ owner, type: WALRUS_BLOB_TYPE, limit: 1000, cursor, include: { json: true, previousTransaction: true } }),
@@ -61,10 +63,13 @@ export async function ownedBlobs(
       complete = true;
       break;
     }
-    if (opts.want?.every((id) => blobs.has(id))) return { blobs, complete: true };
-    if (Date.now() > stopAt) break;
     cursor = r.cursor;
+    if (opts.want?.every((id) => blobs.has(id))) {
+      keep();
+      return { blobs, complete: true };
+    }
+    if (Date.now() > stopAt) break;
   }
-  if (complete) cache.set(owner, { at: Date.now(), blobs, complete });
+  keep();
   return { blobs, complete };
 }
