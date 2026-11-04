@@ -40,7 +40,7 @@ All chain reads go through Tatum's Sui mainnet gRPC gateway. Tatum marks Sui JSO
 
 ## Try it
 
-- Demo: <!-- vercel URL -->
+- Demo: https://anamnesis-inky.vercel.app
 - Code: https://github.com/PinnacleCryptNG/anamnesis
 
 Built with Next.js, Walrus Memory, Tatum, and Claude. Anamnesis organises what you tell it; it does not diagnose.
