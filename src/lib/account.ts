@@ -51,13 +51,9 @@ function findDelegates(json: unknown): DelegateKey[] {
   return out;
 }
 
-export async function readAccount(accountId = process.env.MEMWAL_ACCOUNT_ID || ""): Promise<AccountProof> {
+/** Current Walrus epoch (from the Walrus system object) and latest Sui checkpoint, read through Tatum. */
+export async function chainNow(): Promise<{ walrusEpoch: number | null; checkpoint: string | null }> {
   const sui = tatumSui();
-  const id = accountId.trim();
-  const { object } = await throttled(() =>
-    sui.getObject({ objectId: id, include: { json: true, previousTransaction: true } }),
-  );
-  const json = jsonSafe(object.json) as Record<string, unknown> | null;
   let walrusEpoch: number | null = null;
   let checkpoint: string | null = null;
   try {
@@ -77,6 +73,29 @@ export async function readAccount(accountId = process.env.MEMWAL_ACCOUNT_ID || "
       await new Promise((r) => setTimeout(r, 300 * (i + 1)));
     }
   }
+  return { walrusEpoch, checkpoint };
+}
+
+const owners = new Map<string, string | null>();
+
+/** The wallet that owns a Walrus Memory account; its Walrus blobs are owned by that wallet. */
+export async function accountOwner(accountId: string): Promise<string | null> {
+  if (owners.has(accountId)) return owners.get(accountId)!;
+  const { object } = await throttled(() => tatumSui().getObject({ objectId: accountId, include: { json: true } }));
+  const json = jsonSafe(object.json) as Record<string, unknown> | null;
+  const owner = json && typeof json.owner === "string" ? json.owner : null;
+  owners.set(accountId, owner);
+  return owner;
+}
+
+export async function readAccount(accountId = process.env.MEMWAL_ACCOUNT_ID || ""): Promise<AccountProof> {
+  const sui = tatumSui();
+  const id = accountId.trim();
+  const { object } = await throttled(() =>
+    sui.getObject({ objectId: id, include: { json: true, previousTransaction: true } }),
+  );
+  const json = jsonSafe(object.json) as Record<string, unknown> | null;
+  const { walrusEpoch, checkpoint } = await chainNow();
   const owner = json && typeof json.owner === "string" ? json.owner : null;
   return {
     accountId: id,

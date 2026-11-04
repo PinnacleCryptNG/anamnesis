@@ -27,6 +27,7 @@ const QUERIES = [
   "measurements, readings and lab results",
   "questions the patient wants answered",
   "patterns noticed",
+  "doctor reviews: marked addressed or keep watching",
 ];
 
 export async function POST(req: Request) {

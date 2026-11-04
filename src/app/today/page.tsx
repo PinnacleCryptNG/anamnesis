@@ -6,6 +6,7 @@ import Refs, { type Source } from "@/components/Refs";
 import { Tag } from "@/components/Entry";
 import { Arrow, CameraIcon, NibIcon } from "@/components/Icons";
 import { get } from "@/lib/api";
+import { plain } from "@/lib/cite";
 import { useSession } from "@/lib/session";
 import type { Snapshot } from "@/lib/clinical";
 import u from "@/components/ui.module.css";
@@ -68,7 +69,7 @@ export default function TodayPage() {
         </section>
       ) : (
         <div className={s.layout}>
-          <p className={`display ${s.headline} ${u.reveal}`}>{snap.headline}</p>
+          <p className={`display ${s.headline} ${u.reveal}`}>{plain(snap.headline)}</p>
 
           <section className={`${u.card} ${s.sheet} ${u.reveal}`} style={{ "--i": 1 } as React.CSSProperties}>
             <Row label="Taking now">

@@ -12,7 +12,7 @@ export type Snapshot = {
 };
 
 export const SNAPSHOT_SYSTEM = `You keep the front page of a patient's own medical record. From the numbered record lines, state where things stand today.
-Every item cites the line numbers it rests on in "refs". Never invent, diagnose or advise. Prefer the latest line when lines disagree (a stopped drug is not current). A patient's question stays a question: 'whether X can cause Y' never becomes 'X is causing Y'. Only state that a symptom happened if a line records it happening.
+Every item cites the line numbers it rests on in "refs". Never invent, diagnose or advise. Prefer the latest line when lines disagree (a stopped drug is not current). A patient's question stays a question: 'whether X can cause Y' never becomes 'X is causing Y'. Only state that a symptom happened if a line records it happening. Lines of kind "review" are a doctor's verdict on an earlier item. Marked addressed (and no later line reopens it): leave it out of every open, flag, watch, question and follow-up list; at most say once, in a "what changed" field, that the doctor marked it addressed. Marked keep watching: keep it listed and say the doctor asked to keep watching it. Use only what the lines say; never add outside medical knowledge such as known side effects or drug effects.
 Fields:
 - headline: one calm sentence on where things stand, under 22 words, written to the patient ("you").
 - medications: what the patient takes now: name, dose (with units and frequency), since (YYYY-MM-DD if known), note (short, e.g. "raised from 25mg"). Exclude stopped drugs.
@@ -57,7 +57,7 @@ export type Clinical = {
 };
 
 export const CLINICAL_SYSTEM = `You prepare the clinician's view of a patient-kept record they were given access to.
-The reader is a doctor with five minutes. Every item cites the numbered record lines in "refs". Do not invent or diagnose; say what the patient recorded.
+The reader is a doctor with five minutes. Every item cites the numbered record lines in "refs". Do not invent or diagnose; say what the patient recorded. Lines of kind "review" are a doctor's verdict on an earlier item. Marked addressed (and no later line reopens it): leave it out of every open, flag, watch, question and follow-up list; at most say once, in a "what changed" field, that the doctor marked it addressed. Marked keep watching: keep it listed and say the doctor asked to keep watching it. Use only what the lines say; never add outside medical knowledge such as known side effects or drug effects.
 Fields:
 - summary: two sentences: who this is clinically and what is active now.
 - medications: one entry per drug ever recorded. status current|stopped. segments in date order, each a period at one dose: dose (units and frequency), start (YYYY-MM-DD), end (YYYY-MM-DD or null if ongoing), refs.

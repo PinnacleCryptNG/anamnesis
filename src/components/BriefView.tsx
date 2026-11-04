@@ -1,15 +1,9 @@
 import { EntryList, type EntryT } from "./Entry";
+import Refs from "./Refs";
+import { asCited, plain, type Cited } from "@/lib/cite";
 import s from "./BriefView.module.css";
 
-type Cited = { text: string; refs: number[] };
 export type BriefT = { headline: string; sinceLast: Cited[]; medications: Cited[]; patterns: Cited[]; questions: Cited[]; watch: Cited[]; gaps: string[] };
-
-type Loose = string | { text?: unknown; item?: unknown; refs?: unknown };
-const asText = (v: unknown): string => (typeof v === "string" ? v : v && typeof v === "object" ? asText((v as { text?: unknown; item?: unknown }).text ?? (v as { item?: unknown }).item ?? "") : v == null ? "" : String(v));
-const asCited = (v: unknown): Cited[] =>
-  Array.isArray(v)
-    ? v.map((x: Loose) => ({ text: asText(x), refs: typeof x === "object" && Array.isArray(x.refs) ? x.refs.map(Number).filter(Number.isFinite) : [] })).filter((c) => c.text)
-    : [];
 
 const SECTIONS: [keyof BriefT, string][] = [
   ["sinceLast", "Since last time"],
@@ -20,10 +14,9 @@ const SECTIONS: [keyof BriefT, string][] = [
 ];
 
 export default function BriefView({ brief, sources }: { brief: BriefT; sources: (EntryT & { n: number })[] }) {
-  const byN = new Map(sources.map((x) => [x.n, x]));
   return (
     <article>
-      <p className={s.headline}>{asText(brief.headline)}</p>
+      <p className={s.headline}>{plain(brief.headline)}</p>
       {SECTIONS.map(([k, label], i) => {
         const items = asCited(brief[k]);
         if (!items.length) return null;
@@ -34,9 +27,7 @@ export default function BriefView({ brief, sources }: { brief: BriefT; sources: 
               {items.map((it, j) => (
                 <li key={j}>
                   {it.text}
-                  {it.refs?.length ? (
-                    <span className={s.refs} title={it.refs.map((r) => byN.get(r)?.body).filter(Boolean).join("\n")}>[{it.refs.join(",")}]</span>
-                  ) : null}
+                  <Refs refs={it.refs} sources={sources} />
                 </li>
               ))}
             </ul>

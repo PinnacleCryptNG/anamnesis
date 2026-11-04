@@ -17,7 +17,7 @@ type Res = {
 const DAY = 86_400_000;
 const t = (d: string) => new Date(d + "T12:00:00").getTime();
 
-function DoseChart({ meds, sources }: { meds: Clinical["medications"]; sources: Source[] }) {
+function DoseChart({ meds, sources, account }: { meds: Clinical["medications"]; sources: Source[]; account?: string }) {
   const segs = meds.flatMap((m) => m.segments);
   if (!segs.length) return null;
   const now = Date.now();
@@ -45,10 +45,32 @@ function DoseChart({ meds, sources }: { meds: Clinical["medications"]; sources: 
               );
             })}
           </div>
-          <Refs refs={m.segments.flatMap((g) => g.refs)} sources={sources} />
+          <Refs refs={m.segments.flatMap((g) => g.refs)} sources={sources} account={account} />
         </div>
       ))}
     </div>
+  );
+}
+
+type Verdict = "addressed" | "watch";
+
+function Review({ item, token }: { item: string; token: string }) {
+  const [state, setState] = useState<{ v: Verdict; busy?: boolean; error?: string } | null>(null);
+  const send = async (v: Verdict) => {
+    setState({ v, busy: true });
+    const r = await fetch("/api/doctor/review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: token, item, verdict: v }) })
+      .then((x) => x.json()).catch((e) => ({ error: String(e) }));
+    setState(r.error ? { v, error: r.error } : { v });
+  };
+  if (state && !state.busy && !state.error)
+    return <span className={s.reviewed} data-v={state.v}>{state.v === "addressed" ? "Marked addressed" : "Keep watching"} · filed to the patient&apos;s record</span>;
+  return (
+    <span className={s.review}>
+      <button disabled={state?.busy} onClick={() => send("addressed")}>Addressed</button>
+      <button disabled={state?.busy} onClick={() => send("watch")}>Keep watching</button>
+      {state?.busy && <span className={u.loading} />}
+      {state?.error && <em>{state.error}</em>}
+    </span>
   );
 }
 
@@ -70,6 +92,9 @@ export default function DoctorPage() {
 
   const c = res?.clinical;
   const src = res?.sources ?? [];
+  const token = res?.via === "link" && typeof body?.t === "string" ? body.t : null;
+  const account = typeof body?.account === "string" ? body.account : undefined;
+  const reviews = src.filter((x) => x.kind === "review");
   return (
     <div className={s.page}>
       <header className={s.top}>
@@ -94,12 +119,12 @@ export default function DoctorPage() {
             {c.allergies.length > 0 && (
               <section className={s.allergy}>
                 <h2 className={u.label}>Allergies and adverse reactions</h2>
-                <ul>{c.allergies.map((a, i) => <li key={i}>{a.text}<Refs refs={a.refs} sources={src} /></li>)}</ul>
+                <ul>{c.allergies.map((a, i) => <li key={i}>{a.text}<Refs refs={a.refs} sources={src} account={account} /></li>)}</ul>
               </section>
             )}
             <section className={`${u.card} ${s.meds}`}>
               <h2 className={u.h2}>Medicines over time</h2>
-              <DoseChart meds={c.medications} sources={src} />
+              <DoseChart meds={c.medications} sources={src} account={account} />
             </section>
             <div className={s.grid}>
               {LISTS.map(([k, label], i) => {
@@ -108,17 +133,31 @@ export default function DoctorPage() {
                 return (
                   <section key={k} className={`${s.block} ${k === "flags" ? s.flags : ""}`} style={{ "--i": i } as React.CSSProperties}>
                     <h2 className={u.label}>{label}</h2>
-                    <ul>{items.map((it, j) => <li key={j}>{it.text}<Refs refs={it.refs} sources={src} /></li>)}</ul>
+                    <ul>{items.map((it, j) => (
+                      <li key={j}>
+                        {it.text}<Refs refs={it.refs} sources={src} account={account} />
+                        {token && (k === "flags" || k === "questions") && <Review item={it.text} token={token} />}
+                      </li>
+                    ))}</ul>
                   </section>
                 );
               })}
             </div>
+            {token && (
+              <p className={s.reviewNote}>Mark a flag or question <b>Addressed</b> or <b>Keep watching</b> and it is filed to the patient&apos;s record on Walrus. Their next appointment brief drops addressed items and keeps the rest in view.</p>
+            )}
+            {reviews.length > 0 && (
+              <section className={s.block}>
+                <h2 className={u.label}>Earlier doctor reviews</h2>
+                <ul>{reviews.map((r) => <li key={r.n}><span className="mono">{r.date}</span> {r.body}<Refs refs={[r.n]} sources={src} account={account} /></li>)}</ul>
+              </section>
+            )}
             <footer className={s.proof}>
               <SealIcon size={18} />
               <p>
                 {res.via === "delegate" ? "Your key was found on the patient's account on Sui" : res.via === "sample" ? "Sample record" : "Link signed by Anamnesis and checked against the patient's revocations"}
                 {res.proof && <> · account read through Tatum at Sui checkpoint <span className="mono">{res.proof.checkpoint ?? "?"}</span>, Walrus epoch <span className="mono">{res.proof.walrusEpoch ?? "?"}</span></>}
-                {" · "}{src.length} memories cited. Patient-kept; confirm before acting.
+                {" · "}{src.length} memories cited; tap a citation to check its Walrus blob on Sui. Patient-kept; confirm before acting.
               </p>
             </footer>
           </>

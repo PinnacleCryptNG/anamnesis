@@ -22,7 +22,7 @@ type Extracted = {
   ack: string;
 };
 
-const FACT_KINDS = KINDS.filter((k) => !["brief", "pattern", "share"].includes(k)).join(", ");
+const FACT_KINDS = KINDS.filter((k) => !["brief", "pattern", "share", "review"].includes(k)).join(", ");
 
 const SYSTEM = `You are the clerk of a patient's personal medical record called Anamnesis.
 The patient dictates notes after visits, flare-ups, pharmacy runs, or test results, and sometimes photographs a prescription, pill box, lab report or discharge letter.
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       2000,
       images,
     );
-    const facts = (out.facts || []).filter((f) => f.text && KINDS.includes(f.kind) && f.kind !== "share").slice(0, 12);
+    const facts = (out.facts || []).filter((f) => f.text && KINDS.includes(f.kind) && f.kind !== "share" && f.kind !== "review").slice(0, 12);
     const patterns = (out.patterns || []).filter((p) => p.text).slice(0, 3);
     const texts = [
       ...facts.map((f) => formatEntry(f.kind, /^\d{4}-\d{2}-\d{2}$/.test(f.date) ? f.date : date, f.text)),

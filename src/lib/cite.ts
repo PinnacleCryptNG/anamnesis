@@ -21,7 +21,26 @@ export const asRefs = (v: unknown): number[] =>
     ? ((v as { refs: unknown[] }).refs.map(Number).filter(Number.isFinite) as number[])
     : [];
 
+const INLINE_REFS = /\s*[\[(]?\s*refs?\s*[:=]\s*\[?\s*([\d,\s]+?)\s*\]?\s*[\])]?\s*\.?\s*$/i;
+
+/** Models sometimes write citations into the sentence ("… refs:[6]"); move them into refs. */
+export function splitRefs(text: string): { text: string; refs: number[] } {
+  const m = text.match(INLINE_REFS);
+  if (!m) return { text, refs: [] };
+  const refs = m[1].split(/[,\s]+/).map(Number).filter((n) => Number.isFinite(n) && n > 0);
+  return { text: text.slice(0, m.index).trim(), refs };
+}
+
 export const asCited = (v: unknown): Cited[] =>
-  Array.isArray(v) ? v.map((x: Loose) => ({ text: asText(x), refs: asRefs(x) })).filter((c) => c.text) : [];
+  Array.isArray(v)
+    ? v
+        .map((x: Loose) => {
+          const inline = splitRefs(asText(x));
+          return { text: inline.text, refs: [...new Set([...asRefs(x), ...inline.refs])] };
+        })
+        .filter((c) => c.text)
+    : [];
+
+export const plain = (v: unknown) => splitRefs(asText(v)).text;
 
 export const asList = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);

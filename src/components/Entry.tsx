@@ -27,7 +27,7 @@ export function EntryList({ entries, fresh, numbered }: { entries: EntryT[]; fre
   );
 }
 
-const TAG: Record<string, string> = { clinician: "doctor", measurement: "reading", followup: "follow-up" };
+const TAG: Record<string, string> = { clinician: "doctor", measurement: "reading", followup: "follow-up", review: "reviewed" };
 
 export function Tag({ kind }: { kind: string }) {
   return (

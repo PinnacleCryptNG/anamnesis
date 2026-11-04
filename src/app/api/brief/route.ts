@@ -27,6 +27,7 @@ export async function POST(req: Request) {
         "doctor instructions and follow-ups",
         "patterns noticed",
         "previous appointment brief",
+        "doctor reviews: marked addressed or keep watching",
       ],
       { limit: 12, ctx },
     );

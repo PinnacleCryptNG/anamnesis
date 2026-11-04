@@ -15,6 +15,7 @@ const QUERIES = [
   "most recent doctor visit and instructions",
   "follow-ups, tests due and referrals",
   "recent symptoms",
+  "doctor reviews: marked addressed or keep watching",
 ];
 
 export async function GET(req: Request) {
