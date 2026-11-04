@@ -30,6 +30,7 @@ If a photo is attached, read it carefully first and put a short plain transcript
 Split everything into atomic, self-contained facts a future clinician could read alone.
 Each fact: kind (one of ${FACT_KINDS}), date (YYYY-MM-DD), text (one plain sentence, include names, doses, units, who said it, and "from photo of …" when it came from the photo).
 Use "allergy" only for allergies and serious adverse drug reactions.
+Keep what happened apart from what the patient wants to ask: a worry or question ("I want to ask about ankle swelling") is filed as a question to raise, not as a symptom that occurred.
 Then compare with the prior record you are given and add "patterns": only links that the new note plus older facts genuinely support (e.g. a symptom that began after a dose change, a reading trend, a repeated trigger). Cite the old dates in the text. Never diagnose. Zero patterns is fine.
 "ack": one short sentence back to the patient about what was filed and anything that connected to older history.`;
 
