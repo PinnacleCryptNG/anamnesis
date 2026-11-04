@@ -1,4 +1,4 @@
-.wrap { position: relative; max-width: 720px; margin: 6vh auto 0; }
+.wrap { position: relative; max-width: 720px; margin: 6vh auto 0; overflow-x: clip; padding: 0 4px 12px; }
 .sheet {
   position: relative; background: var(--paper); padding: 56px 48px 60px 96px; border-radius: 3px;
   box-shadow: 0 30px 60px -30px rgba(60,40,10,.45), 0 1px 2px rgba(60,40,10,.16);

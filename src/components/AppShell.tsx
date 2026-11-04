@@ -74,7 +74,11 @@ export default function AppShell({ children, title, sub, aside }: { children: Re
 
       <header className={s.top}>
         <Brand small />
-        <Whose />
+        <div className={s.topEnd}>
+          <Whose />
+          <Link href="/emergency" aria-label="Emergency card" className={on("/emergency") ? s.on : undefined}><CrossCardIcon size={20} /></Link>
+          <Link href="/ledger" aria-label="Proof on Sui" className={on("/ledger") ? s.on : undefined}><SealIcon size={20} /></Link>
+        </div>
       </header>
 
       <main className={s.main} key={path}>
