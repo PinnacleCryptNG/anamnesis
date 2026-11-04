@@ -29,12 +29,14 @@ function OnChain({ c }: { c: Check | "checking" | "failed" | undefined }) {
   return (
     <span className={s.chain} data-state="on">
       <SealIcon size={13} />
-      On Sui:{" "}
-      <a className="mono" href={`https://suiscan.xyz/mainnet/object/${c.blob.objectId}`} target="_blank" rel="noreferrer">
-        object {c.blob.objectId.slice(0, 6)}…{c.blob.objectId.slice(-4)}
-      </a>
-      {c.blob.certifiedEpoch != null ? `, certified epoch ${c.blob.certifiedEpoch}` : ", not yet certified"}, stored to epoch {c.blob.endEpoch}
-      {until ? ` (about ${until})` : ""}
+      <span>
+        On Sui as{" "}
+        <a className="mono" href={`https://suiscan.xyz/mainnet/object/${c.blob.objectId}`} target="_blank" rel="noreferrer">
+          {c.blob.objectId.slice(0, 6)}…{c.blob.objectId.slice(-4)}
+        </a>
+        {c.blob.certifiedEpoch != null ? ` · certified in epoch ${c.blob.certifiedEpoch}` : " · not yet certified"} · paid to epoch {c.blob.endEpoch}
+        {until ? ` (about ${until})` : ""}
+      </span>
     </span>
   );
 }

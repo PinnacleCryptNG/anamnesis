@@ -46,3 +46,4 @@
 .reviewed { display: block; margin-top: 6px; font-family: var(--f-mono), monospace; font-size: 11px; letter-spacing: .04em; color: var(--k-medication); animation: slideIn 300ms; }
 .reviewed[data-v="watch"] { color: var(--k-reaction); }
 .reviewNote { margin-top: 26px; max-width: 70ch; font-size: 14px; color: var(--ink-soft); }
+.reviews { margin-top: 28px; }

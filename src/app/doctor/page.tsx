@@ -147,7 +147,7 @@ export default function DoctorPage() {
               <p className={s.reviewNote}>Mark a flag or question <b>Addressed</b> or <b>Keep watching</b> and it is filed to the patient&apos;s record on Walrus. Their next appointment brief drops addressed items and keeps the rest in view.</p>
             )}
             {reviews.length > 0 && (
-              <section className={s.block}>
+              <section className={`${s.block} ${s.reviews}`}>
                 <h2 className={u.label}>Earlier doctor reviews</h2>
                 <ul>{reviews.map((r) => <li key={r.n}><span className="mono">{r.date}</span> {r.body}<Refs refs={[r.n]} sources={src} account={account} /></li>)}</ul>
               </section>
