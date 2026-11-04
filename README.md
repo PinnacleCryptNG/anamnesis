@@ -1,5 +1,7 @@
 # Anamnesis
 
+Live demo: https://anamnesis-inky.vercel.app (a sample migraine history, 50 memories on Walrus mainnet)
+
 *Anamnesis* (Greek: recollection) is the medical word for a patient's history. This app is a medical history the patient owns. After each visit, flare-up or new prescription, you write or dictate what happened. Anamnesis breaks the note into separate facts and files each one as a memory on **Walrus Memory (Sui mainnet)**. Each fact is checked against everything filed before. Before an appointment, it recalls what matters and writes a one-page brief, with every line citing the memory it came from.
 
 Built for **Total Recall: the Tatum × Walrus Memory Hackathon** (Smart Agents for Real Life track).
