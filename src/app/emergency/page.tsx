@@ -30,7 +30,7 @@ export default function EmergencyPage() {
     get<{ snapshot: Snapshot | null }>("/api/today").then((r) => { setSnap(r.snapshot ?? null); setLoading(false); });
   }, [session]);
 
-  const set = (k: keyof Card) => (e: React.ChangeEvent<HTMLInputElement>) => setCard((c) => ({ ...c, [k]: e.target.value }));
+  const set = (k: keyof Card) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setCard((c) => ({ ...c, [k]: e.target.value }));
   const publish = async () => {
     setBusy(true); setErr(null);
     const r = await post<{ token: string }>("/api/share", { action: "create", scope: "emergency", who: "Emergency card", days: 0, card });
@@ -51,13 +51,18 @@ export default function EmergencyPage() {
         <section className={`${u.card} ${s.form}`}>
           <h2 className={u.h2}>On the card</h2>
           <p className={u.muted}>Allergies, medicines and conditions come from your record. Add what it can&apos;t know.</p>
-          <input className={u.field} placeholder="Full name" value={card.name || ""} onChange={set("name")} />
+          <label className={s.f}><span className={u.label}>Full name</span><input className={u.field} value={card.name || ""} onChange={set("name")} /></label>
           <div className={s.two}>
-            <input className={u.field} placeholder="Date of birth" value={card.born || ""} onChange={set("born")} />
-            <input className={u.field} placeholder="Blood type" value={card.blood || ""} onChange={set("blood")} />
+            <label className={s.f}><span className={u.label}>Date of birth</span><input className={u.field} type="date" max={new Date().toISOString().slice(0, 10)} value={/^\d{4}-\d{2}-\d{2}$/.test(card.born || "") ? card.born : ""} onChange={set("born")} /></label>
+            <label className={s.f}><span className={u.label}>Blood type</span>
+              <select className={u.field} value={card.blood || ""} onChange={set("blood")}>
+                <option value="">Not known</option>
+                {["A+", "A−", "B+", "B−", "AB+", "AB−", "O+", "O−"].map((b) => <option key={b}>{b}</option>)}
+              </select>
+            </label>
           </div>
-          <input className={u.field} placeholder="Emergency contact and phone" value={card.contact || ""} onChange={set("contact")} />
-          <input className={u.field} placeholder="Anything else (e.g. pacemaker, organ donor)" value={card.notes || ""} onChange={set("notes")} />
+          <label className={s.f}><span className={u.label}>Emergency contact</span><input className={u.field} placeholder="Name and phone" value={card.contact || ""} onChange={set("contact")} /></label>
+          <label className={s.f}><span className={u.label}>Anything else</span><input className={u.field} placeholder="e.g. pacemaker, organ donor" value={card.notes || ""} onChange={set("notes")} /></label>
           {hosted ? (
             <button className={u.primary} onClick={publish} disabled={busy}>{busy ? "Issuing…" : url ? "Reissue the QR" : "Make the QR"}</button>
           ) : (

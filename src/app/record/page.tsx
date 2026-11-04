@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { Kind } from "@/components/Entry";
+import { Tag } from "@/components/Entry";
 import { CameraIcon, MicIcon, Arrow } from "@/components/Icons";
 import { post } from "@/lib/api";
 import { useSession } from "@/lib/session";
@@ -70,13 +70,13 @@ export default function NotePage() {
   };
 
   return (
-    <AppShell title="What happened?" sub="Write it the way you'd tell a friend: the visit, the new tablets, the bad night, the reading. Or photograph the prescription or lab sheet. Anamnesis files the facts and checks them against everything before.">
+    <AppShell title="What happened?" sub="Write it the way you'd tell a friend, or photograph a prescription or lab sheet. Anamnesis sorts it into facts.">
       <div className={s.layout}>
         <section className={s.pad}>
-          <div className={s.padHead}>
-            <input className={`mono ${s.date}`} type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Date of note" />
-            <span className={s.holes} aria-hidden />
-          </div>
+          <label className={s.padHead}>
+            <span>Date</span>
+            <input className={`mono ${s.date}`} type="date" value={date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setDate(e.target.value)} />
+          </label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -91,9 +91,9 @@ export default function NotePage() {
             </figure>
           )}
           <div className={s.tools}>
-            <button className={u.primary} onClick={file} disabled={sample || busy || (!note.trim() && !photo)}>{busy ? "Filing…" : "File to record"}</button>
-            <button className={u.ghost} onClick={() => fileInput.current?.click()} disabled={sample}><CameraIcon size={18} /> Photo</button>
-            <button className={u.ghost} data-on={listening} onClick={dictate} disabled={sample}><MicIcon size={18} /> {listening ? "Stop" : "Dictate"}</button>
+            <button className={s.tool} onClick={() => fileInput.current?.click()} disabled={sample} aria-label="Add a photo"><CameraIcon size={19} /><span>Photo</span></button>
+            <button className={s.tool} data-on={listening} onClick={dictate} disabled={sample} aria-label={listening ? "Stop dictation" : "Dictate"}><MicIcon size={19} /><span>{listening ? "Stop" : "Dictate"}</span></button>
+            <button className={`${u.primary} ${s.file}`} onClick={file} disabled={sample || busy || (!note.trim() && !photo)}>{busy ? "Filing…" : "File to record"}</button>
             <input ref={fileInput} type="file" accept="image/*" capture="environment" hidden onChange={(e) => pick(e.target.files?.[0])} />
           </div>
           {busy && <p className={u.empty}><span className={u.loading} />{photo ? "Reading the photo, then filing…" : "Comparing with your history, then filing to Walrus…"}</p>}
@@ -111,7 +111,7 @@ export default function NotePage() {
                   const m = w.text.match(/^\[([a-z]+) · ([\d-]+)\]\s*([\s\S]*)$/);
                   return (
                     <li key={i} style={{ "--i": i } as React.CSSProperties}>
-                      <Kind kind={m?.[1] ?? "note"} />
+                      <Tag kind={m?.[1] ?? "note"} />
                       <span>{m?.[3] ?? w.text}</span>
                       <span className="mono">{w.blobId ? `walrus ${w.blobId.slice(0, 8)}` : "sealing…"}</span>
                     </li>
@@ -122,12 +122,8 @@ export default function NotePage() {
             </>
           ) : (
             <div className={s.how}>
-              <h2 className={u.label}>What gets filed</h2>
-              <ol>
-                <li>Each fact on its own card: symptom, medicine, dose, reading, what the doctor said.</li>
-                <li>Links to older history when there is one, like a headache that started after a dose change.</li>
-                <li>Sealed as Walrus memories on Sui, under your key.</li>
-              </ol>
+              <h2 className={u.label}>What happens next</h2>
+              <p>Each fact (a symptom, a medicine and dose, a reading, what the doctor said) is filed on its own, linked to older history where it fits, and saved to Walrus under your key.</p>
             </div>
           )}
         </aside>

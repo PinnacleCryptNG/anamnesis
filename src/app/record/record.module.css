@@ -1,23 +1,28 @@
 .layout { display: grid; gap: 28px; }
 @media (min-width: 1040px) { .layout { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; } }
 .pad {
-  position: relative; background-color: var(--paper); border-radius: 3px; padding: 18px 26px 24px 78px;
-  background-image: linear-gradient(90deg, transparent 56px, rgba(201,96,90,.55) 56px, rgba(201,96,90,.55) 58px, transparent 58px);
-  box-shadow: 0 1px 0 #fff inset, 0 1px 2px rgba(60,40,10,.16), 0 30px 60px -30px rgba(60,40,10,.45);
-  border-top: 26px solid #d7cba9;
+  position: relative; background-color: var(--paper); border-radius: 4px; padding: 16px 24px 16px 74px;
+  background-image: linear-gradient(90deg, transparent 54px, rgba(201,96,90,.5) 54px, rgba(201,96,90,.5) 56px, transparent 56px);
+  border: 1px solid rgba(60,40,10,.14); border-top: 8px solid #d7cba9;
+  box-shadow: 0 1px 2px rgba(60,40,10,.12), 0 24px 50px -32px rgba(60,40,10,.45);
 }
-.padHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.holes { position: absolute; top: -18px; left: 0; right: 0; height: 10px; background: radial-gradient(circle, var(--manila) 4px, transparent 5px) 0 0 / 34px 10px repeat-x; opacity: .9; }
-.date { border: 0; border-bottom: 1px solid var(--rule); background: none; padding: 4px 2px; color: var(--ink-soft); }
+.padHead { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; color: var(--ink-soft); font-size: 13px; }
+.padHead > span { font-family: var(--f-mono), monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+.date { border: 0; background: none; padding: 4px 2px; color: var(--ink); font-size: 14px; }
 .pad textarea {
-  width: 100%; min-height: calc(var(--line) * 9); resize: vertical; border: 0; outline: 0; display: block;
+  width: 100%; min-height: calc(var(--line) * 8); resize: vertical; border: 0; outline: 0; display: block;
   background: repeating-linear-gradient(transparent 0 calc(var(--line) - 1px), var(--rule) calc(var(--line) - 1px) var(--line));
   line-height: var(--line); font-size: 18px; padding-top: 2px;
 }
 .pad textarea::placeholder { color: #a39d8f; font-style: italic; font-family: var(--f-display), serif; }
 .photo { margin: 14px 0 0; display: flex; gap: 14px; align-items: end; }
-.photo img { max-width: 180px; max-height: 180px; border-radius: 3px; box-shadow: 0 8px 18px -10px rgba(0,0,0,.5); transform: rotate(-1.5deg); border: 6px solid #fff; }
-.tools { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.photo img { max-width: 160px; max-height: 160px; border-radius: 3px; box-shadow: 0 8px 18px -10px rgba(0,0,0,.5); border: 5px solid #fff; }
+.tools { display: flex; align-items: center; gap: 4px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.tool { display: inline-flex; align-items: center; gap: 7px; background: none; border: 0; border-radius: 4px; padding: 8px 10px; font-size: 15px; color: var(--ink-soft); }
+.tool:hover:not(:disabled) { color: var(--ink); background: rgba(31,36,40,.06); }
+.tool[data-on="true"] { color: var(--oxblood); animation: pulseLine 1.2s infinite; }
+.tool:disabled { opacity: .45; }
+.file { margin-left: auto; }
 .note { margin-top: 14px; color: var(--ink-soft); }
 .note a { color: var(--oxblood); }
 .result { min-width: 0; }
@@ -30,6 +35,10 @@
 }
 .filed li > :first-child { justify-self: start; }
 .filed .mono { color: var(--ink-soft); font-size: 11px; }
-.how { padding: 6px 4px; }
-.how ol { margin-top: 10px; padding-left: 20px; display: grid; gap: 10px; color: var(--ink-soft); }
-@media (max-width: 640px) { .pad { padding: 14px 16px 20px 46px; background-image: linear-gradient(90deg, transparent 32px, rgba(201,96,90,.55) 32px, rgba(201,96,90,.55) 34px, transparent 34px); } }
+.how { padding: 6px 4px; max-width: 44ch; }
+.how p { margin-top: 8px; color: var(--ink-soft); font-size: 15px; line-height: 1.55; }
+@media (max-width: 640px) {
+  .pad { padding: 12px 14px 12px 42px; background-image: linear-gradient(90deg, transparent 30px, rgba(201,96,90,.5) 30px, rgba(201,96,90,.5) 32px, transparent 32px); }
+  .pad textarea { min-height: calc(var(--line) * 7); font-size: 17px; }
+}
+@media (max-width: 400px) { .tool span { display: none; } }

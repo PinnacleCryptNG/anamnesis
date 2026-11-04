@@ -10,7 +10,7 @@ export default function EmergencyCard({ card, snap, qr }: { card: Card; snap: Sn
         <div>
           <span className={s.cap}>Medical information</span>
           <h2 className="display">{card.name || "Name not given"}</h2>
-          <span className="mono">{[card.born && `born ${card.born}`, card.blood && `blood ${card.blood}`].filter(Boolean).join(" · ")}</span>
+          <span className="mono">{[card.born && `born ${/^\d{4}-\d{2}-\d{2}$/.test(card.born) ? new Date(card.born + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : card.born}`, card.blood && `blood ${card.blood}`].filter(Boolean).join(" · ")}</span>
         </div>
         {qr && <img className={s.qr} src={qr} alt="QR code that opens this card" />}
       </header>

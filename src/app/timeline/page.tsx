@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import Refs, { type Source } from "@/components/Refs";
-import { Kind } from "@/components/Entry";
+import { Tag } from "@/components/Entry";
 import { AskIcon } from "@/components/Icons";
 import { get, post } from "@/lib/api";
 import { useSession } from "@/lib/session";
@@ -10,7 +10,7 @@ import u from "@/components/ui.module.css";
 import s from "./timeline.module.css";
 
 type E = { blobId: string; kind: string; date: string; body: string };
-const KINDS = ["all", "symptom", "medication", "reaction", "allergy", "diagnosis", "clinician", "measurement", "followup", "pattern"];
+const KINDS: [string, string][] = [["symptom", "Symptoms"], ["medication", "Medicines"], ["reaction", "Reactions"], ["allergy", "Allergies"], ["diagnosis", "Diagnoses"], ["clinician", "Doctor's notes"], ["measurement", "Readings"], ["followup", "Follow-ups"], ["pattern", "Patterns"]];
 
 export default function TimelinePage() {
   const session = useSession();
@@ -42,6 +42,13 @@ export default function TimelinePage() {
     return [...byMonth.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([m, days]) => ({ m, days: [...days.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)) }));
   }, [entries, kind, text]);
 
+  const counts = useMemo(() => {
+    const c = new Map<string, number>();
+    for (const e of entries ?? []) c.set(e.kind, (c.get(e.kind) ?? 0) + 1);
+    return c;
+  }, [entries]);
+  const tabs: [string, string, number][] = [["all", "All", entries?.length ?? 0], ...KINDS.filter(([k]) => counts.has(k)).map(([k, l]) => [k, l, counts.get(k)!] as [string, string, number])];
+
   const ask = async () => {
     if (text.trim().length < 2) return;
     setAsking(true); setAnswer(null);
@@ -54,18 +61,20 @@ export default function TimelinePage() {
   const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", day: "numeric" });
 
   return (
-    <AppShell title="Everything, in order." sub="Every fact on file, grouped by the day it happened. Type to filter, or ask the record a question in plain words.">
+    <AppShell title="Everything, in order." sub="Every fact on file, newest first. Type to filter, or ask a question.">
       <div className={s.tools}>
         <div className={s.search}>
           <AskIcon size={20} />
-          <input value={text} onChange={(e) => { setText(e.target.value); setAnswer(null); }} onKeyDown={(e) => e.key === "Enter" && ask()} placeholder="Filter, or ask: when did the headaches start?" aria-label="Search or ask the record" />
+          <input value={text} onChange={(e) => { setText(e.target.value); setAnswer(null); }} onKeyDown={(e) => e.key === "Enter" && ask()} placeholder="Filter or ask a question" aria-label="Search or ask the record" />
           <button className={u.ghost} onClick={ask} disabled={asking || text.trim().length < 2}>{asking ? <span className={u.loading} /> : "Ask"}</button>
         </div>
-        <div className={s.kinds} role="tablist" aria-label="Filter by kind">
-          {KINDS.map((k) => (
-            <button key={k} className="mono" data-on={kind === k} onClick={() => setKind(k)} role="tab" aria-selected={kind === k}>{k}</button>
-          ))}
-        </div>
+        {entries && entries.length > 0 && (
+          <div className={s.kinds} role="tablist" aria-label="Filter by kind">
+            {tabs.map(([k, l, n]) => (
+              <button key={k} data-on={kind === k} onClick={() => setKind(k)} role="tab" aria-selected={kind === k}>{l}<span>{n}</span></button>
+            ))}
+          </div>
+        )}
       </div>
 
       {answer && (
@@ -88,7 +97,7 @@ export default function TimelinePage() {
                     <ul>
                       {list.map((e, i) => (
                         <li key={e.blobId + i} className={e.kind === "pattern" ? s.pattern : undefined}>
-                          <Kind kind={e.kind} /> <span>{e.body}</span>
+                          <Tag kind={e.kind} /><span>{e.body}</span>
                         </li>
                       ))}
                     </ul>
