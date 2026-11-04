@@ -69,10 +69,14 @@ export async function readAccount(accountId = process.env.MEMWAL_ACCOUNT_ID || "
       walrusEpoch = v?.committee?.epoch != null ? Number(v.committee.epoch) : null;
     }
   } catch {}
-  try {
-    const { response: info } = await throttled(async () => await sui.ledgerService.getServiceInfo({}));
-    checkpoint = info.checkpointHeight?.toString() ?? null;
-  } catch {}
+  for (let i = 0; i < 3 && !checkpoint; i++) {
+    try {
+      const { response: info } = await throttled(async () => await sui.ledgerService.getServiceInfo({}));
+      checkpoint = info.checkpointHeight?.toString() ?? null;
+    } catch {
+      await new Promise((r) => setTimeout(r, 300 * (i + 1)));
+    }
+  }
   const owner = json && typeof json.owner === "string" ? json.owner : null;
   return {
     accountId: id,
