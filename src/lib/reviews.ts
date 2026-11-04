@@ -43,10 +43,16 @@ export function dropAddressed<T extends Cited>(items: T[], sources: Src[]): T[] 
     const cited = refs.filter((s) => s.kind !== "review");
     const watched = refs
       .filter((s) => s.kind === "review" && /marked it keep watching/.test(s.body))
-      .map((s) => ({ ...s, item: s.body.match(/reviewed "(.+?)" and marked it/)?.[1] ?? "" }));
+      .map((s) => ({
+        ...s,
+        item: s.body.match(/reviewed "(.+?)" and marked it/)?.[1] ?? "",
+        src: (s.body.match(/Sources: ([A-Za-z0-9_\-, ]+)\./)?.[1] ?? "").split(/[,\s]+/).filter(Boolean),
+      }));
+    const sameMatter = (v: (typeof watched)[number], m: { key: string; words: Set<string>; src: Set<string> }) =>
+      norm(v.item) === m.key || similar(words(v.item), m.words) || v.src.some((k) => m.src.has(k));
     const w = words(it.text);
     return !matters.some((m) => {
-      if (cited.some((s) => after(s, m)) || watched.some((s) => after(s, m) && (norm(s.item) === m.key || similar(words(s.item), m.words)))) return false;
+      if (cited.some((s) => after(s, m)) || watched.some((v) => after(v, m) && sameMatter(v, m))) return false;
       if (norm(it.text) === m.key) return true;
       if (cited.length) {
         if (!m.src.size || !cited.every((s) => m.src.has(srcKey(s.blobId)))) return false;
