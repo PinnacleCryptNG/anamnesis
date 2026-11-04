@@ -70,7 +70,7 @@ export async function readAccount(accountId = process.env.MEMWAL_ACCOUNT_ID || "
     }
   } catch {}
   try {
-    const info = await throttled(() => sui.ledgerService.getServiceInfo({}).response);
+    const { response: info } = await throttled(async () => await sui.ledgerService.getServiceInfo({}));
     checkpoint = info.checkpointHeight?.toString() ?? null;
   } catch {}
   const owner = json && typeof json.owner === "string" ? json.owner : null;

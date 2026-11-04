@@ -21,9 +21,9 @@ function DoseChart({ meds, sources }: { meds: Clinical["medications"]; sources: 
   const segs = meds.flatMap((m) => m.segments);
   if (!segs.length) return null;
   const now = Date.now();
-  const start = Math.min(...segs.map((g) => t(g.start)));
-  const end = Math.max(now, ...segs.map((g) => (g.end ? t(g.end) : now)));
-  const span = Math.max(end - start, 30 * DAY);
+  const end = Math.max(now, ...segs.map((g) => (g.end ? t(g.end) : now))) + 7 * DAY;
+  const start = Math.min(end - 60 * DAY, ...segs.map((g) => t(g.start)));
+  const span = end - start;
   const x = (ms: number) => ((ms - start) / span) * 100;
   const months: number[] = [];
   const d = new Date(start); d.setDate(1); d.setMonth(d.getMonth() + 1);
@@ -37,7 +37,7 @@ function DoseChart({ meds, sources }: { meds: Clinical["medications"]; sources: 
           <div className={s.track}>
             {months.map((mm) => <i key={mm} style={{ left: `${x(mm)}%` }} />)}
             {m.segments.map((g, j) => {
-              const a = x(t(g.start)); const b = x(g.end ? t(g.end) : now);
+              const a = x(t(g.start)); const b = g.end ? x(t(g.end)) : 100;
               return (
                 <span key={j} className={s.seg} style={{ left: `${a}%`, width: `${Math.max(b - a, 1.5)}%`, "--j": j } as React.CSSProperties} title={`${g.dose} from ${g.start}${g.end ? ` to ${g.end}` : ""}`}>
                   <em>{g.dose}</em>
@@ -74,7 +74,7 @@ export default function DoctorPage() {
     <div className={s.page}>
       <header className={s.top}>
         <Brand small />
-        <span className={s.whose}>{res?.status === "active" ? <>Shared by <b>{res.who || "the patient"}</b>{res.exp ? ` · until ${new Date(res.exp).toLocaleDateString(undefined, { day: "numeric", month: "short" })}` : ""}</> : "Clinician view"}</span>
+        <span className={s.whose}>{res?.status === "active" ? <>{res.who ? <>Shared with <b>{res.who}</b></> : "Shared by the patient"}{res.exp ? ` · until ${new Date(res.exp).toLocaleDateString(undefined, { day: "numeric", month: "short" })}` : ""}</> : "Clinician view"}</span>
       </header>
       <main className={s.main}>
         {!res ? (
