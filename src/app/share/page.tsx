@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Folder from "@/components/Folder";
+import { post } from "@/lib/api";
 import s from "../page.module.css";
 import l from "../ledger/ledger.module.css";
 
@@ -20,7 +21,10 @@ export default function SharePage() {
     });
   useEffect(() => { refresh(); }, []);
 
-  const make = async () => setKey(await fetch("/api/share", { method: "POST" }).then((r) => r.json()));
+  const make = async () => {
+    const r = await post<Key>("/api/share");
+    if (!r.error) setKey(r);
+  };
   const link = key ? `${typeof window !== "undefined" ? window.location.origin : ""}/doctor#k=${key.privateKey}` : "";
   const copy = (v: string, what: string) => navigator.clipboard.writeText(v).then(() => { setCopied(what); setTimeout(() => setCopied(null), 1500); });
   const active = key && delegates?.some((d) => d.publicKeyHex === key.publicKeyHex);

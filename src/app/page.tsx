@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Folder from "@/components/Folder";
 import { EntryList, type EntryT } from "@/components/Entry";
+import { post } from "@/lib/api";
 import s from "./page.module.css";
 
 const KINDS = ["all", "symptom", "medication", "reaction", "diagnosis", "clinician", "measurement", "followup", "pattern"];
@@ -33,8 +34,7 @@ export default function RecordPage() {
   const file = async () => {
     if (!note.trim()) return;
     setBusy(true); setErr(null); setAck(null);
-    const r = await fetch("/api/intake", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ note, date }) })
-      .then((r) => r.json()).catch((e) => ({ error: String(e) }));
+    const r = await post<{ ack: string; written: { text: string; blobId?: string; jobId: string }[] }>("/api/intake", { note, date });
     setBusy(false);
     if (r.error) return setErr(r.error);
     setAck(r.ack);
@@ -66,7 +66,7 @@ export default function RecordPage() {
   const ask = async () => {
     if (!q.trim()) return;
     setAsking(true); setAnswer(null);
-    const r = await fetch("/api/ask", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q }) }).then((r) => r.json());
+    const r = await post<{ answer: string; refs: number[] }>("/api/ask", { q });
     setAsking(false);
     setAnswer(r.error ? { answer: r.error, refs: [] } : r);
   };

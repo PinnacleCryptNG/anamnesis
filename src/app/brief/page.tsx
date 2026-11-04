@@ -3,6 +3,7 @@ import { useState } from "react";
 import Folder from "@/components/Folder";
 import BriefView, { type BriefT } from "@/components/BriefView";
 import type { EntryT } from "@/components/Entry";
+import { post } from "@/lib/api";
 import s from "../page.module.css";
 
 const PRESETS = ["GP check-up", "Endocrinology follow-up", "New specialist, first visit", "Pharmacist medication review"];
@@ -16,8 +17,7 @@ export default function BriefPage() {
   const make = async (p = purpose) => {
     if (!p.trim()) return;
     setPurpose(p); setBusy(true); setErr(null); setData(null);
-    const r = await fetch("/api/brief", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ purpose: p }) })
-      .then((r) => r.json()).catch((e) => ({ error: String(e) }));
+    const r = await post<{ brief: BriefT; sources: (EntryT & { n: number })[] }>("/api/brief", { purpose: p });
     setBusy(false);
     if (r.error) return setErr(r.error);
     setData(r);
