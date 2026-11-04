@@ -74,7 +74,7 @@ export default function DoctorPage() {
     <div className={s.page}>
       <header className={s.top}>
         <Brand small />
-        <span className={s.whose}>{res?.status === "active" ? <>{res.who ? <>Shared with <b>{res.who}</b></> : "Shared by the patient"}{res.exp ? ` · until ${new Date(res.exp).toLocaleDateString(undefined, { day: "numeric", month: "short" })}` : ""}</> : "Clinician view"}</span>
+        <span className={s.whose}>{res?.status === "active" ? <>{res.via === "sample" ? <><b>Sample patient</b> · read-only</> : res.who ? <>Shared with <b>{res.who}</b></> : "Shared by the patient"}{res.exp ? ` · until ${new Date(res.exp).toLocaleDateString(undefined, { day: "numeric", month: "short" })}` : ""}</> : "Clinician view"}</span>
       </header>
       <main className={s.main}>
         {!res ? (
