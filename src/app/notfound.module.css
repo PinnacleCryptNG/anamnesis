@@ -1,0 +1,23 @@
+.wrap { position: relative; max-width: 720px; margin: 6vh auto 0; }
+.sheet {
+  position: relative; background: var(--paper); padding: 56px 48px 60px 96px; border-radius: 3px;
+  box-shadow: 0 30px 60px -30px rgba(60,40,10,.45), 0 1px 2px rgba(60,40,10,.16);
+  background-image: repeating-linear-gradient(transparent 0 calc(var(--line) - 1px), var(--rule) calc(var(--line) - 1px) var(--line));
+  background-position: 0 120px; transform: rotate(-1.2deg); animation: drop 700ms cubic-bezier(.2,.7,.2,1);
+}
+.sheet::before { content: ""; position: absolute; top: 0; bottom: 0; left: 66px; width: 2px; background: var(--margin); opacity: .45; }
+.sheet > p:first-of-type { color: var(--ink-soft); }
+.sheet h1 { font-weight: 400; font-size: clamp(36px, 6vw, 60px); line-height: 1.04; letter-spacing: -.02em; margin: 6px 0 18px; }
+.sheet h1 em { color: var(--oxblood); }
+.body { max-width: 44ch; color: var(--ink-soft); line-height: var(--line); }
+.links { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-top: 28px; }
+.links a { color: var(--ink); }
+.primary { background: var(--ink); color: var(--paper) !important; text-decoration: none; padding: 11px 20px; border-radius: 3px; font-family: var(--f-display), serif; }
+.stamp {
+  position: absolute; top: 34px; right: 34px; color: var(--oxblood); border: 2px solid var(--oxblood); padding: 4px 10px;
+  letter-spacing: .16em; text-transform: uppercase; font-size: 12px; transform: rotate(8deg); animation: stamp404 600ms 500ms backwards;
+}
+.torn { position: absolute; left: 6%; right: 4%; bottom: -16px; height: 30px; background: var(--manila-deep); z-index: -1; transform: rotate(1.5deg); border-radius: 2px; }
+@keyframes drop { from { opacity: 0; transform: translateY(-30px) rotate(-4deg); } to { opacity: 1; transform: rotate(-1.2deg); } }
+@keyframes stamp404 { 0% { opacity: 0; transform: scale(2) rotate(14deg); } 70% { opacity: 1; transform: scale(.95) rotate(8deg); } 100% { transform: scale(1) rotate(8deg); } }
+@media (max-width: 760px) { .sheet { padding: 70px 20px 44px 44px; } .sheet::before { left: 30px; } .stamp { top: 18px; right: 16px; } }

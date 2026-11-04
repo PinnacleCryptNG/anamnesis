@@ -33,3 +33,11 @@
 .answer { margin-top: 14px; font-size: 18px; animation: slideIn 300ms; }
 .answer sup { color: var(--oxblood); font-family: var(--f-mono), monospace; font-size: 11px; margin-left: 2px; }
 .loading { display: inline-block; width: 46px; height: 2px; background: var(--ink); animation: pulseLine 900ms infinite; vertical-align: middle; }
+.split { display: grid; gap: 8px 56px; }
+.left { min-width: 0; }
+.split > section { min-width: 0; }
+@media (min-width: 1080px) {
+  .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); align-items: start; }
+  .left { position: sticky; top: 24px; }
+  .split > section { margin-top: 0; }
+}
