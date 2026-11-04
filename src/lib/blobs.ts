@@ -30,9 +30,13 @@ const TTL = 60_000;
 const MAX_PAGES = 200;
 
 /** Every Walrus Blob object the wallet owns on Sui, keyed by blob ID, read through Tatum's gRPC gateway. */
-export async function ownedBlobs(owner: string, fresh = false): Promise<{ blobs: Map<string, BlobProof>; complete: boolean }> {
+export async function ownedBlobs(
+  owner: string,
+  opts: { fresh?: boolean; want?: string[]; budgetMs?: number } = {},
+): Promise<{ blobs: Map<string, BlobProof>; complete: boolean; cached?: boolean }> {
   const hit = cache.get(owner);
-  if (hit && !fresh && Date.now() - hit.at < TTL) return hit;
+  if (hit && !opts.fresh && Date.now() - hit.at < TTL) return { ...hit, cached: true };
+  const stopAt = Date.now() + (opts.budgetMs ?? 12_000);
   const sui = tatumSui();
   const blobs = new Map<string, BlobProof>();
   let cursor: string | null = null;
@@ -57,9 +61,10 @@ export async function ownedBlobs(owner: string, fresh = false): Promise<{ blobs:
       complete = true;
       break;
     }
+    if (opts.want?.every((id) => blobs.has(id))) return { blobs, complete: true };
+    if (Date.now() > stopAt) break;
     cursor = r.cursor;
   }
-  const out = { at: Date.now(), blobs, complete };
-  cache.set(owner, out);
-  return out;
+  if (complete) cache.set(owner, { at: Date.now(), blobs, complete });
+  return { blobs, complete };
 }

@@ -6,6 +6,7 @@ import { completeJson } from "@/lib/llm";
 import { asLines, numbered, recallMany, SAMPLE, today, type Ctx } from "@/lib/memory";
 import { openShare, reviewTag } from "@/lib/record";
 import { CLINICAL_SYSTEM, normalizeClinical } from "@/lib/clinical";
+import { dropAddressed } from "@/lib/reviews";
 
 export const maxDuration = 60;
 
@@ -77,6 +78,8 @@ export async function POST(req: Request) {
       `Today is ${today()}. Only call something due, overdue or "today" by comparing its date with today.${purpose ? ` Reason for visit: ${purpose}.` : ""}\n\nRecord:\n${asLines(sources)}`,
       2600,
     ));
+    clinical.flags = dropAddressed(clinical.flags, sources);
+    clinical.questions = dropAddressed(clinical.questions, sources);
     return NextResponse.json({
       status: "active",
       via,

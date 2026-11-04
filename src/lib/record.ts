@@ -49,7 +49,19 @@ const secret = () =>
 const sign = (body: string) => createHmac("sha256", secret()).update(body).digest("base64url").slice(0, 32);
 
 /** Binds a doctor's review to an item the doctor view actually showed on this link. */
-export const reviewTag = (shareId: string, item: string) => sign(`review:${shareId}:${item}`);
+export const reviewTag = (shareId: string, item: string, at = Date.now()) => {
+  const t = at.toString(36);
+  return `${t}.${sign(`review:${shareId}:${t}:${item}`)}`;
+};
+
+const REVIEW_TTL = 6 * 3600_000;
+export function checkReviewTag(shareId: string, item: string, tag: string): boolean {
+  const at = parseInt(tag.split(".")[0], 36);
+  if (!Number.isFinite(at) || Date.now() - at > REVIEW_TTL || at > Date.now() + 60_000) return false;
+  const want = Buffer.from(reviewTag(shareId, item, at));
+  const got = Buffer.from(tag);
+  return want.length === got.length && timingSafeEqual(want, got);
+}
 
 export const newShareId = () => randomBytes(6).toString("hex");
 

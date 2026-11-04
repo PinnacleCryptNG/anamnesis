@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { formatEntry, rememberAll, today } from "@/lib/memory";
-import { openShare, reviewTag } from "@/lib/record";
+import { checkReviewTag, openShare } from "@/lib/record";
 
 export const maxDuration = 30;
 
@@ -20,8 +20,8 @@ export async function POST(req: Request) {
   const { t, item, verdict, note, tag } = parsed.data;
   const opened = await openShare(t, "doctor");
   if (opened instanceof NextResponse) return opened;
-  if (tag !== reviewTag(opened.share.id, item))
-    return NextResponse.json({ error: "That item isn't one this doctor view showed. Reload and try again." }, { status: 403 });
+  if (!checkReviewTag(opened.share.id, item, tag))
+    return NextResponse.json({ error: "That item isn't on this doctor view any more. Reload the page and try again." }, { status: 403 });
   const who = opened.share.who?.trim() || "The doctor";
   const text = formatEntry(
     "review",

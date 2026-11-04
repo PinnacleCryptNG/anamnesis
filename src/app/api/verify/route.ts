@@ -20,8 +20,9 @@ export async function POST(req: Request) {
   try {
     const owner = await accountOwner(accountId.trim());
     if (!owner) return NextResponse.json({ error: "The record's Walrus account has no owner on Sui." }, { status: 502 });
-    let scan = await ownedBlobs(owner);
-    if (parsed.data.blobIds.some((id) => !scan.blobs.has(id))) scan = await ownedBlobs(owner, true);
+    const want = parsed.data.blobIds;
+    let scan = await ownedBlobs(owner, { want });
+    if (scan.cached && want.some((id) => !scan.blobs.has(id))) scan = await ownedBlobs(owner, { want, fresh: true });
     const now = await chainNow();
     const out: Record<string, BlobProof | null> = {};
     for (const id of parsed.data.blobIds) out[id] = scan.blobs.get(id) ?? null;
