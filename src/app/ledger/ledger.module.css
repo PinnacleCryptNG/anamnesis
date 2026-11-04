@@ -1,0 +1,17 @@
+.steps { list-style: none; counter-reset: step; }
+.steps li { counter-increment: step; position: relative; padding: 0 0 26px 44px; animation: slideIn 400ms backwards; }
+.steps li:nth-child(2) { animation-delay: 120ms; } .steps li:nth-child(3) { animation-delay: 240ms; }
+.steps li::before { content: counter(step); position: absolute; left: 0; top: -2px; font-family: var(--f-display), serif; font-size: 28px; color: var(--oxblood); }
+.steps h3 { font-family: var(--f-display), serif; font-weight: 400; font-size: 21px; }
+.steps p { color: var(--ink-soft); margin: 4px 0 8px; max-width: 60ch; }
+.code { display: block; word-break: break-all; font-family: var(--f-mono), monospace; font-size: 13px; background: #f1ead8; border: 1px dashed var(--manila-deep); padding: 10px 12px; margin-bottom: 4px; cursor: copy; }
+.table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.table th { text-align: left; font-family: var(--f-mono), monospace; font-weight: 500; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); padding: 6px 8px 6px 0; border-bottom: 1.5px solid var(--ink); }
+.table td { padding: 8px 8px 8px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.table tr { animation: slideIn 300ms backwards; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0; border-top: 1.5px solid var(--ink); margin-bottom: 30px; }
+.fact { padding: 12px 14px 14px 0; border-bottom: 1px solid var(--rule); animation: slideIn 400ms backwards; }
+.fact dt { font-family: var(--f-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); }
+.fact dd { font-family: var(--f-display), serif; font-size: 22px; margin-top: 2px; word-break: break-all; }
+.fact dd.small { font-family: var(--f-mono), monospace; font-size: 13px; }
+.seal { display: inline-block; margin-left: 8px; color: var(--oxblood); border: 1.5px solid var(--oxblood); border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 19px; font-size: 13px; animation: stamp 500ms 400ms backwards; }

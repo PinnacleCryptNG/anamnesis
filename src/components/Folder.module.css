@@ -1,0 +1,58 @@
+.desk { max-width: 1120px; margin: 0 auto; padding: 28px 20px 80px; }
+.label { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 0 6px 18px; }
+.brand { text-decoration: none; font-size: 30px; letter-spacing: -0.01em; color: var(--oxblood); }
+.brand span { font-style: italic; }
+.patient { color: var(--ink-soft); }
+
+.folder { display: grid; grid-template-columns: 1fr 64px; align-items: start; }
+.sheet {
+  grid-column: 1; grid-row: 1;
+  position: relative;
+  background: var(--paper);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 #fff inset, 0 1px 2px rgba(60, 40, 10, 0.18), 0 18px 40px -18px rgba(60, 40, 10, 0.35);
+  border-top: 6px solid var(--tone);
+  padding: 34px 44px 48px 92px;
+  min-height: 70vh;
+  animation: slideIn 420ms cubic-bezier(.2,.7,.2,1);
+}
+.sheet::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 64px; width: 2px;
+  background: var(--margin); opacity: 0.45;
+}
+.sheet::after {
+  content: ""; position: absolute; left: 22px; top: 80px; width: 16px; height: calc(100% - 160px);
+  background: radial-gradient(circle at 8px 8px, var(--manila) 6px, rgba(0,0,0,.12) 7px, transparent 8px) 0 0 / 16px 120px repeat-y;
+}
+.head { padding-bottom: 22px; margin-bottom: 26px; border-bottom: 1px solid var(--rule); }
+.head h1 { font-size: clamp(30px, 4.2vw, 46px); line-height: 1.08; font-weight: 400; letter-spacing: -0.015em; }
+.head p { margin-top: 10px; max-width: 60ch; color: var(--ink-soft); }
+
+.tabs { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 6px; padding-top: 40px; margin-left: -2px; }
+.tab {
+  writing-mode: vertical-rl; text-decoration: none;
+  background: var(--tone); color: var(--ink);
+  padding: 18px 10px; border-radius: 0 8px 8px 0;
+  font-family: var(--f-display), serif; font-size: 16px; letter-spacing: 0.04em;
+  box-shadow: 2px 2px 0 rgba(60,40,10,.12);
+  transform: translateX(-8px); transition: transform 220ms cubic-bezier(.2,.7,.2,1);
+  animation: slideIn 500ms backwards; animation-delay: calc(var(--i) * 70ms);
+}
+.tab:hover { transform: translateX(-2px); }
+.on { transform: translateX(0); font-weight: 700; }
+
+@media (max-width: 760px) {
+  .desk { padding: 16px 10px 90px; }
+  .folder { grid-template-columns: 1fr; }
+  .sheet { padding: 24px 18px 40px 42px; }
+  .sheet::before { left: 30px; }
+  .sheet::after { display: none; }
+  .tabs {
+    position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; flex-direction: row; gap: 4px;
+    padding: 0 8px; margin: 0; background: linear-gradient(transparent, var(--manila) 30%);
+  }
+  .tab { writing-mode: horizontal-tb; flex: 1; text-align: center; padding: 14px 4px 18px; border-radius: 8px 8px 0 0; transform: translateY(6px); }
+  .tab:hover { transform: translateY(3px); }
+  .on { transform: none; }
+  .patient { display: none; }
+}
