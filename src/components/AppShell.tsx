@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useSession, formatKey } from "@/lib/session";
+import { useSession } from "@/lib/session";
 import { Mark, TodayIcon, TimelineIcon, BriefIcon, KeyIcon, SealIcon, NibIcon, CrossCardIcon } from "./Icons";
 import s from "./AppShell.module.css";
 
@@ -35,7 +35,7 @@ function Whose() {
   return (
     <span className={s.whose}>
       <b>{session.own ? "Your Walrus account" : "Your record"}</b>
-      <span className="mono">{session.key ? `card ${formatKey(session.key).slice(-4)}` : "own account"}</span>
+      <span>Private to you</span>
     </span>
   );
 }
@@ -75,13 +75,13 @@ export default function AppShell({ children, title, sub, aside }: { children: Re
       <header className={s.top}>
         <Brand small />
         <div className={s.topEnd}>
-          <Whose />
           <Link href="/emergency" aria-label="Emergency card" className={on("/emergency") ? s.on : undefined}><CrossCardIcon size={20} /></Link>
           <Link href="/ledger" aria-label="Proof on Sui" className={on("/ledger") ? s.on : undefined}><SealIcon size={20} /></Link>
         </div>
       </header>
 
       <main className={s.main} key={path}>
+        {session?.mode === "sample" && <p className={s.sampleBar}>Sample patient, read-only. <Link href="/start">Start your own record</Link></p>}
         <div className={s.head}>
           <h1 className="display">{title}</h1>
           {sub && <p>{sub}</p>}

@@ -15,3 +15,5 @@
 .fresh { animation: ink 900ms steps(40) backwards; }
 .ref { margin-left: 8px; color: var(--ink-soft); font-size: 11px; }
 @media (max-width: 760px) { .item { grid-template-columns: 1fr; gap: 2px; } }
+.tag { display: inline-flex; align-items: center; gap: 7px; font-family: var(--f-mono), monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--k); white-space: nowrap; }
+.tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--k); flex: none; }

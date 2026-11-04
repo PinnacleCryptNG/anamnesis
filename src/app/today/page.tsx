@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import Refs, { type Source } from "@/components/Refs";
-import { Kind } from "@/components/Entry";
+import { Tag } from "@/components/Entry";
 import { Arrow, CameraIcon, NibIcon } from "@/components/Icons";
 import { get } from "@/lib/api";
 import { useSession } from "@/lib/session";
@@ -68,86 +68,80 @@ export default function TodayPage() {
         </section>
       ) : (
         <div className={s.layout}>
-          <section className={`${u.card} ${u.ruled} ${s.headline} ${u.reveal}`}>
-            <p className="display">{snap.headline}</p>
-            <span className={`mono ${s.count}`}>{data!.count} memories read</span>
-          </section>
+          <p className={`display ${s.headline} ${u.reveal}`}>{snap.headline}</p>
 
-          <section className={`${s.meds} ${u.reveal}`} style={{ "--i": 1 } as React.CSSProperties}>
-            <h2 className={u.h2}>Taking now</h2>
-            {snap.medications.length ? (
-              <ul>
-                {snap.medications.map((m, i) => (
-                  <li key={i} className={s.med}>
-                    <span className={s.rx}>Rx</span>
-                    <div>
-                      <b>{m.name}</b>
-                      <span className="mono">{m.dose}</span>
-                      {(m.note || m.since) && <small>{[m.note, m.since && `since ${fmt(m.since)}`].filter(Boolean).join(" · ")}</small>}
-                    </div>
-                    <Refs refs={m.refs} sources={src} />
-                  </li>
-                ))}
-              </ul>
-            ) : <p className={u.empty}>No current medicines on file.</p>}
-          </section>
-
-          <section className={`${s.open} ${u.reveal}`} style={{ "--i": 2 } as React.CSSProperties}>
-            <h2 className={u.h2}>Still open</h2>
-            {snap.followups.length ? (
-              <ul>
-                {snap.followups.map((f, i) => (
-                  <li key={i}>
-                    <span className={s.box} aria-hidden />
-                    <span>{f.text}{f.due && <em className="mono"> due {fmt(f.due)}</em>}<Refs refs={f.refs} sources={src} /></span>
-                  </li>
-                ))}
-              </ul>
-            ) : <p className={u.empty}>Nothing waiting on you.</p>}
-          </section>
-
-          <div className={s.side}>
+          <section className={`${u.card} ${s.sheet} ${u.reveal}`} style={{ "--i": 1 } as React.CSSProperties}>
+            <Row label="Taking now">
+              {snap.medications.length ? (
+                <ul className={s.meds}>
+                  {snap.medications.map((m, i) => (
+                    <li key={i}>
+                      <b>{m.name}</b> <span className="mono">{m.dose}</span><Refs refs={m.refs} sources={src} />
+                      {(m.note || m.since) && <small>{[m.since && `Since ${fmt(m.since)}`, m.note].filter(Boolean).join(" · ")}</small>}
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className={s.none}>No current medicines on file.</p>}
+            </Row>
+            <Row label="Still open">
+              {snap.followups.length ? (
+                <ul className={s.open}>
+                  {snap.followups.map((f, i) => (
+                    <li key={i}>
+                      <span className={s.box} aria-hidden />
+                      <span>{f.text}<Refs refs={f.refs} sources={src} />{f.due && <small>Due {fmt(f.due)}</small>}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className={s.none}>Nothing waiting on you.</p>}
+            </Row>
             {snap.allergies.length > 0 && (
-              <section className={`${s.alert} ${u.reveal}`} style={{ "--i": 3 } as React.CSSProperties}>
-                <h2 className={u.label}>Allergies and reactions</h2>
-                <ul>{snap.allergies.map((a, i) => <li key={i}>{a.text}<Refs refs={a.refs} sources={src} /></li>)}</ul>
-              </section>
-            )}
-            {snap.lastVisit && (
-              <section className={`${u.card} ${u.reveal}`} style={{ "--i": 4 } as React.CSSProperties}>
-                <h2 className={u.label}>Last visit{snap.lastVisit.date ? ` · ${fmt(snap.lastVisit.date)}` : ""}</h2>
-                <p className={s.visit}>{snap.lastVisit.text}<Refs refs={snap.lastVisit.refs} sources={src} /></p>
-              </section>
+              <Row label="Allergies" alert>
+                <ul className={s.plain}>{snap.allergies.map((a, i) => <li key={i} className={s.allergy}>{a.text}<Refs refs={a.refs} sources={src} /></li>)}</ul>
+              </Row>
             )}
             {snap.conditions.length > 0 && (
-              <section className={u.reveal} style={{ "--i": 5 } as React.CSSProperties}>
-                <h2 className={u.label}>Conditions</h2>
-                <p className={s.conds}>{snap.conditions.map((c, i) => <span key={i}>{c.text}<Refs refs={c.refs} sources={src} /></span>)}</p>
-              </section>
+              <Row label="Conditions">
+                <ul className={s.plain}>{snap.conditions.map((c, i) => <li key={i}>{c.text}<Refs refs={c.refs} sources={src} /></li>)}</ul>
+              </Row>
+            )}
+            {snap.lastVisit && (
+              <Row label="Last visit">
+                <p>{snap.lastVisit.date && <small className={s.when}>{fmt(snap.lastVisit.date)}</small>}{snap.lastVisit.text}<Refs refs={snap.lastVisit.refs} sources={src} /></p>
+              </Row>
             )}
             {snap.watch.length > 0 && (
-              <section className={`${s.watch} ${u.reveal}`} style={{ "--i": 6 } as React.CSSProperties}>
-                <h2 className={u.label}>Raise next time</h2>
-                <ul>{snap.watch.map((w, i) => <li key={i}>{w.text}<Refs refs={w.refs} sources={src} /></li>)}</ul>
-                <Link href="/brief" className={u.link}>Prepare a brief</Link>
-              </section>
+              <Row label="Raise next time">
+                <ul className={s.plain}>{snap.watch.map((w, i) => <li key={i}>{w.text}<Refs refs={w.refs} sources={src} /></li>)}</ul>
+                <Link href="/brief" className={s.more}>Prepare a brief <Arrow size={14} /></Link>
+              </Row>
             )}
-          </div>
+          </section>
 
-          <section className={`${s.recent} ${u.reveal}`} style={{ "--i": 7 } as React.CSSProperties}>
+          <section className={`${s.recent} ${u.reveal}`} style={{ "--i": 2 } as React.CSSProperties}>
             <div className={s.recentHead}>
               <h2 className={u.h2}>Lately</h2>
-              <Link href="/timeline" className={s.more}>Whole timeline <Arrow size={16} /></Link>
+              <Link href="/timeline" className={s.more}>Whole timeline <Arrow size={14} /></Link>
             </div>
             <ol>
               {[...src].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 5).map((e) => (
-                <li key={e.blobId}><span className="mono">{fmt(e.date)}</span><Kind kind={e.kind} /><span>{e.body}</span></li>
+                <li key={e.blobId}><span className={s.meta}><span className="mono">{fmt(e.date)}</span><Tag kind={e.kind} /></span><span>{e.body}</span></li>
               ))}
             </ol>
+            <p className={`mono ${s.count}`}>Summed up from {data!.count} memories</p>
           </section>
         </div>
       )}
       {err && data && <p className={u.err}>{err}</p>}
     </AppShell>
+  );
+}
+
+function Row({ label, alert, children }: { label: string; alert?: boolean; children: React.ReactNode }) {
+  return (
+    <div className={s.row} data-alert={alert || undefined}>
+      <h2>{label}</h2>
+      <div>{children}</div>
+    </div>
   );
 }

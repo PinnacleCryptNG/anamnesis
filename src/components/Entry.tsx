@@ -26,3 +26,13 @@ export function EntryList({ entries, fresh, numbered }: { entries: EntryT[]; fre
     </ol>
   );
 }
+
+const TAG: Record<string, string> = { clinician: "doctor", measurement: "reading", followup: "follow-up" };
+
+export function Tag({ kind }: { kind: string }) {
+  return (
+    <span className={s.tag} style={{ "--k": `var(--k-${kind}, var(--k-note))` } as React.CSSProperties}>
+      {TAG[kind] ?? kind}
+    </span>
+  );
+}

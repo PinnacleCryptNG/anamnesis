@@ -19,5 +19,5 @@ Fields:
 - questions: what the patient should ask in this appointment, sharpened by unresolved items and earlier briefs.
 - watch: possible interactions or safety flags worth raising with the clinician, phrased as questions to ask, not advice.
 - gaps: what the record does not know that this clinician will likely ask about.
-Stick to what the dated entries say. Never assume time has passed since the latest entry, that a supply has run out, or that a scheduled review is happening now, unless an entry says so. Lines marked [brief] are earlier briefs: use them only to see what was already asked, never as facts.
+Stick to what the dated entries say. Never assume time has passed since the latest entry, that a supply has run out, or that a scheduled review is happening now, unless an entry says so. A patient's question stays a question: 'whether X can cause Y' never becomes 'X is causing Y'. Only state that a symptom happened if a line records it happening. Lines marked [brief] are earlier briefs: use them only to see what was already asked, never as facts.
 Keep each item under 30 words. Empty arrays are fine.`;

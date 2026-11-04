@@ -1,24 +1,35 @@
-.layout { display: grid; gap: 28px; }
-@media (min-width: 1040px) { .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.page { display: grid; gap: 40px; max-width: 640px; }
+.notice { max-width: 640px; }
 .notice a { color: var(--oxblood); }
-.issue { display: grid; gap: 10px; padding: 26px; }
-.issue h2, .card h2 { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-.issue .label, .issue > span { margin-top: 8px; }
-.issue > button:last-of-type { justify-self: start; margin-top: 10px; }
-.days { display: flex; flex-wrap: wrap; gap: 8px; }
-.days button { background: none; border: 1.5px solid rgba(31,36,40,.3); border-radius: 4px; padding: 7px 12px; font-size: 15px; }
-.days button[data-on="true"] { border-color: var(--ink); background: var(--ink); color: var(--paper); }
-.made { display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center; margin-top: 14px; padding-top: 16px; border-top: 1px dashed var(--rule); animation: unfold 420ms cubic-bezier(.2,.7,.2,1); transform-origin: top; }
-.made p { margin-bottom: 10px; font-size: 15px; }
-.qr { width: 120px; height: 120px; padding: 6px; background: #fff; border-radius: 6px; border: 1px solid var(--rule); }
+.h { font-family: var(--f-display), serif; font-weight: 400; font-size: 22px; line-height: 1.2; margin-bottom: 14px; }
+.issue { display: grid; gap: 18px; padding: 24px; }
+.issue .h { margin-bottom: 0; }
+.issue > .primary, .issue > button { justify-self: start; }
+.field { display: grid; gap: 8px; }
+.days { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid rgba(31,36,40,.3); border-radius: 6px; overflow: hidden; }
+.days button { background: none; border: 0; border-left: 1px solid rgba(31,36,40,.18); padding: 9px 4px; font-size: 15px; color: var(--ink-soft); white-space: nowrap; }
+.days button:first-child { border-left: 0; }
+.days button[data-on="true"] { background: var(--ink); color: var(--paper); }
+.made { display: grid; grid-template-columns: 112px 1fr; gap: 18px; align-items: center; padding-top: 18px; border-top: 1px solid var(--rule); animation: unfold 420ms cubic-bezier(.2,.7,.2,1); transform-origin: top; }
+.made b { font-weight: 600; }
+.made p { margin: 4px 0 10px; font-size: 15px; color: var(--ink-soft); }
+.qr { width: 112px; height: 112px; }
 .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-.list ul { list-style: none; margin-top: 10px; }
-.list li { display: grid; grid-template-columns: 24px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--rule); }
-.list li b { display: block; font-weight: 500; }
-.list li .mono { color: var(--ink-soft); }
-.list li[data-off="true"] { opacity: .5; }
-.list li[data-off="true"] b { text-decoration: line-through; }
-.card { margin-top: 44px; display: grid; gap: 10px; max-width: 560px; }
-.card > button { justify-self: start; margin-top: 6px; color: var(--ink-soft); }
-.foot { margin-top: 34px; display: flex; gap: 8px; align-items: center; color: var(--ink-soft); }
+.small { background: none; border: 1px solid rgba(31,36,40,.35); border-radius: 4px; padding: 6px 12px; font-size: 14px; color: var(--ink); }
+.small:hover { border-color: var(--ink); }
+.none { color: var(--ink-soft); }
+.list { list-style: none; border-top: 1px solid rgba(60,40,10,.16); }
+.list li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(60,40,10,.16); }
+.list li svg { color: var(--ink-soft); }
+.list li b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list li span { font-size: 14px; color: var(--ink-soft); }
+.list li[data-off="true"] { opacity: .55; }
+.forget { margin-top: 14px; background: none; border: 0; padding: 0; color: var(--ink-soft); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+.foot { margin-top: 40px; display: flex; gap: 8px; align-items: center; color: var(--ink-soft); }
 .foot a { color: var(--ink); }
+@media (max-width: 520px) {
+  .issue { padding: 20px 18px; }
+  .days button { font-size: 14px; }
+  .made { grid-template-columns: 96px 1fr; gap: 14px; }
+  .qr { width: 96px; height: 96px; }
+}

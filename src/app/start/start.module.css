@@ -7,12 +7,15 @@
 .lead p { margin-top: 16px; font-size: 18px; color: var(--ink-soft); max-width: 58ch; }
 .cols { display: grid; gap: 26px; }
 @media (min-width: 900px) { .cols { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; } }
-.panel { padding: 28px clamp(20px, 3vw, 34px); }
+.panel { padding: 28px clamp(18px, 3vw, 34px); display: grid; gap: 16px; justify-items: start; }
+.panel > * { margin: 0 !important; }
+.panel > figure { justify-self: stretch; }
 .panel h2 + * { margin-top: 0; }
-.check { display: flex; align-items: center; gap: 10px; margin: 18px 0 14px; font-size: 16px; }
+.check { display: flex; align-items: center; gap: 10px; font-size: 16px; }
 .check input { width: 18px; height: 18px; accent-color: var(--oxblood); }
 .side { display: flex; flex-direction: column; gap: 6px; }
 .block { padding: 18px 2px 20px; border-bottom: 1px solid rgba(60,40,10,.16); }
+.block > p { margin-top: 8px; }
 .block:last-of-type { border-bottom: 0; }
 .block summary { cursor: pointer; list-style: none; }
 .block summary::-webkit-details-marker { display: none; }
