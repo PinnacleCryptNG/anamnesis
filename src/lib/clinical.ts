@@ -1,4 +1,4 @@
-import { asCited, asList, asRefs, asText, type Cited } from "./cite";
+import { asCited, asList, asRefs, asText, splitRefs, type Cited } from "./cite";
 
 export type Med = { name: string; dose: string; since?: string; note?: string; refs: number[] };
 export type Snapshot = {
@@ -27,20 +27,30 @@ Exact shape:
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
 
+const cited = (v: unknown, text = asText(v)) => {
+  const inline = splitRefs(text);
+  return { text: inline.text, refs: [...new Set([...asRefs(v), ...inline.refs])] };
+};
+
 export function normalizeSnapshot(raw: unknown): Snapshot {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const lv = o.lastVisit as Record<string, unknown> | null | undefined;
   return {
     headline: asText(o.headline),
     medications: asList<Record<string, unknown>>(o.medications)
-      .map((m) => ({ name: asText(m.name ?? m.drug ?? m), dose: asText(m.dose), since: str(m.since), note: str(m.note), refs: asRefs(m) }))
+      .map((m) => {
+        const name = cited(m, asText(m.name ?? m.drug ?? m));
+        const dose = splitRefs(asText(m.dose));
+        const note = splitRefs(asText(m.note));
+        return { name: name.text, dose: dose.text, since: str(m.since), note: str(note.text), refs: [...new Set([...name.refs, ...dose.refs, ...note.refs])] };
+      })
       .filter((m) => m.name),
     followups: asList<Record<string, unknown>>(o.followups)
-      .map((f) => ({ text: asText(f), due: str((f as Record<string, unknown>)?.due), refs: asRefs(f) }))
+      .map((f) => ({ ...cited(f), due: str((f as Record<string, unknown>)?.due) }))
       .filter((f) => f.text),
     allergies: asCited(o.allergies),
     conditions: asCited(o.conditions),
-    lastVisit: lv && asText(lv) ? { text: asText(lv.text ?? lv), date: str(lv.date), refs: asRefs(lv) } : null,
+    lastVisit: lv && asText(lv) ? { ...cited(lv, asText(lv.text ?? lv)), date: str(lv.date) } : null,
     watch: asCited(o.watch),
   };
 }

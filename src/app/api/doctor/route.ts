@@ -4,7 +4,7 @@ import { MemWal } from "@mysten-incubation/memwal";
 import { readAccount, type AccountProof } from "@/lib/account";
 import { completeJson } from "@/lib/llm";
 import { asLines, numbered, recallMany, SAMPLE, today, type Ctx } from "@/lib/memory";
-import { openShare } from "@/lib/record";
+import { openShare, reviewTag } from "@/lib/record";
 import { CLINICAL_SYSTEM, normalizeClinical } from "@/lib/clinical";
 
 export const maxDuration = 60;
@@ -40,6 +40,7 @@ export async function POST(req: Request) {
   let exp: number | null = null;
   let proof: AccountProof | null = null;
   let via: "link" | "delegate" | "sample";
+  let shareId: string | null = null;
   if (sample) {
     ctx = SAMPLE;
     who = "Sample patient";
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
     ctx = opened.ctx;
     who = opened.share.who;
     exp = opened.share.exp;
+    shareId = opened.share.id;
     via = "link";
     proof = await readAccount().catch(() => null);
   } else {
@@ -82,6 +84,9 @@ export async function POST(req: Request) {
       exp,
       clinical,
       sources,
+      reviewTags: shareId
+        ? Object.fromEntries([...clinical.flags, ...clinical.questions].map((x) => [x.text, reviewTag(shareId!, x.text)]))
+        : undefined,
       proof: proof && { accountId: proof.accountId, version: proof.version, checkpoint: proof.checkpoint, walrusEpoch: proof.walrusEpoch, checkedAt: proof.checkedAt },
     });
   } catch (e) {

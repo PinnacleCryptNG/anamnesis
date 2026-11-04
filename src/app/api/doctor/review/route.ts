@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { formatEntry, rememberAll, today } from "@/lib/memory";
-import { openShare } from "@/lib/record";
+import { openShare, reviewTag } from "@/lib/record";
 
 export const maxDuration = 30;
 
@@ -9,6 +9,7 @@ const Body = z.object({
   t: z.string().max(2000),
   item: z.string().min(3).max(300),
   verdict: z.enum(["addressed", "watch"]),
+  tag: z.string().max(64),
   note: z.string().max(240).optional(),
 });
 
@@ -16,9 +17,11 @@ const Body = z.object({
 export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Pick addressed or keep watching for one item." }, { status: 400 });
-  const { t, item, verdict, note } = parsed.data;
+  const { t, item, verdict, note, tag } = parsed.data;
   const opened = await openShare(t, "doctor");
   if (opened instanceof NextResponse) return opened;
+  if (tag !== reviewTag(opened.share.id, item))
+    return NextResponse.json({ error: "That item isn't one this doctor view showed. Reload and try again." }, { status: 403 });
   const who = opened.share.who?.trim() || "The doctor";
   const text = formatEntry(
     "review",

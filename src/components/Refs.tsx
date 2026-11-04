@@ -3,14 +3,15 @@ import { useState } from "react";
 import { Kind } from "./Entry";
 import { SealIcon } from "./Icons";
 import { post } from "@/lib/api";
+import { recordHeaders } from "@/lib/session";
 import u from "./ui.module.css";
 import s from "./Refs.module.css";
 
 export type Source = { n: number; blobId: string; kind: string; date: string; body: string };
 
 type BlobProof = { objectId: string; size: number; certifiedEpoch: number | null; endEpoch: number };
-type Check = { checkpoint: string | null; walrusEpoch: number | null; checkedAt: string; blob: BlobProof | null };
-type VerifyRes = { error?: string; checkpoint: string | null; walrusEpoch: number | null; checkedAt: string; blobs: Record<string, BlobProof | null> };
+type Check = { checkpoint: string | null; walrusEpoch: number | null; checkedAt: string; blob: BlobProof | null; complete: boolean };
+type VerifyRes = { error?: string; checkpoint: string | null; walrusEpoch: number | null; checkedAt: string; complete?: boolean; blobs: Record<string, BlobProof | null> };
 
 const EPOCH_MS = 14 * 86_400_000;
 const checked = new Map<string, Check>();
@@ -24,6 +25,7 @@ function paidUntil(c: Check): string | null {
 function OnChain({ c }: { c: Check | "checking" | "failed" | undefined }) {
   if (!c || c === "checking") return <span className={s.chain}><span className={u.loading} />Checking Sui through Tatum…</span>;
   if (c === "failed") return <span className={s.chain} data-state="off">Couldn&apos;t reach Sui just now. Tap again to retry.</span>;
+  if (!c.blob && !c.complete) return <span className={s.chain} data-state="off">The account holds too many blobs to scan in one check, so this one wasn&apos;t reached.</span>;
   if (!c.blob) return <span className={s.chain} data-state="off">Not found among the account&apos;s Walrus blobs yet. New memories take a minute to settle.</span>;
   const until = paidUntil(c);
   return (
@@ -45,16 +47,17 @@ export default function Refs({ refs, sources, account }: { refs: number[]; sourc
   const [open, setOpen] = useState(false);
   const [, bump] = useState(0);
   const [state, setState] = useState<"idle" | "checking" | "failed">("idle");
+  const scope = (account || recordHeaders()["x-memwal-account"] || "hosted") + ":";
   const hits = [...new Set(refs)].map((r) => sources.find((x) => x.n === r)).filter(Boolean) as Source[];
   if (!hits.length) return null;
 
   const verify = async () => {
-    const ids = hits.map((h) => h.blobId).filter((id) => !checked.get(id)?.blob);
+    const ids = hits.map((h) => h.blobId).filter((id) => !checked.get(scope + id)?.blob);
     if (!ids.length) return;
     setState("checking");
     const r = await post<VerifyRes>("/api/verify", { blobIds: ids, account });
     if (r.error || !r.blobs) return setState("failed");
-    for (const id of ids) checked.set(id, { checkpoint: r.checkpoint, walrusEpoch: r.walrusEpoch, checkedAt: r.checkedAt, blob: r.blobs[id] ?? null });
+    for (const id of ids) checked.set(scope + id, { checkpoint: r.checkpoint, walrusEpoch: r.walrusEpoch, checkedAt: r.checkedAt, blob: r.blobs[id] ?? null, complete: r.complete !== false });
     setState("idle");
     bump((n) => n + 1);
   };
@@ -63,7 +66,7 @@ export default function Refs({ refs, sources, account }: { refs: number[]; sourc
     setOpen((v) => !v);
     if (!open) void verify();
   };
-  const cp = hits.map((h) => checked.get(h.blobId)?.checkpoint).find(Boolean);
+  const cp = hits.map((h) => checked.get(scope + h.blobId)?.checkpoint).find(Boolean);
 
   return (
     <span className={s.wrap}>
@@ -78,7 +81,7 @@ export default function Refs({ refs, sources, account }: { refs: number[]; sourc
               <a className="mono" href={`https://walruscan.com/mainnet/blob/${h.blobId}`} target="_blank" rel="noreferrer">
                 walrus {h.blobId.slice(0, 6)}
               </a>
-              <OnChain c={checked.get(h.blobId) ?? (state === "failed" ? "failed" : "checking")} />
+              <OnChain c={checked.get(scope + h.blobId) ?? (state === "failed" ? "failed" : "checking")} />
             </span>
           ))}
           {state === "failed" && (

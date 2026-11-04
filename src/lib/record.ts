@@ -48,6 +48,9 @@ const secret = () =>
   createHmac("sha256", process.env.SHARE_SECRET || process.env.MEMWAL_KEY || "anamnesis").update("anamnesis-share-v1").digest();
 const sign = (body: string) => createHmac("sha256", secret()).update(body).digest("base64url").slice(0, 32);
 
+/** Binds a doctor's review to an item the doctor view actually showed on this link. */
+export const reviewTag = (shareId: string, item: string) => sign(`review:${shareId}:${item}`);
+
 export const newShareId = () => randomBytes(6).toString("hex");
 
 export function signShare(p: SharePayload): string {

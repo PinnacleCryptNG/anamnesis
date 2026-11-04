@@ -25,17 +25,19 @@ export function blobIdFromU256(dec: string): string {
 
 type BlobJson = { blob_id: string; size: string | number; registered_epoch: number; certified_epoch: number | null; storage: { end_epoch: number } };
 
-const cache = new Map<string, { at: number; blobs: Map<string, BlobProof> }>();
+const cache = new Map<string, { at: number; blobs: Map<string, BlobProof>; complete: boolean }>();
 const TTL = 60_000;
+const MAX_PAGES = 200;
 
 /** Every Walrus Blob object the wallet owns on Sui, keyed by blob ID, read through Tatum's gRPC gateway. */
-export async function ownedBlobs(owner: string, fresh = false): Promise<Map<string, BlobProof>> {
+export async function ownedBlobs(owner: string, fresh = false): Promise<{ blobs: Map<string, BlobProof>; complete: boolean }> {
   const hit = cache.get(owner);
-  if (hit && !fresh && Date.now() - hit.at < TTL) return hit.blobs;
+  if (hit && !fresh && Date.now() - hit.at < TTL) return hit;
   const sui = tatumSui();
   const blobs = new Map<string, BlobProof>();
   let cursor: string | null = null;
-  for (let page = 0; page < 10; page++) {
+  let complete = false;
+  for (let page = 0; page < MAX_PAGES; page++) {
     const r = await throttled(() =>
       sui.listOwnedObjects({ owner, type: WALRUS_BLOB_TYPE, limit: 1000, cursor, include: { json: true, previousTransaction: true } }),
     );
@@ -51,9 +53,13 @@ export async function ownedBlobs(owner: string, fresh = false): Promise<Map<stri
         previousTransaction: (o as { previousTransaction?: string }).previousTransaction,
       });
     }
-    if (!r.hasNextPage || !r.cursor) break;
+    if (!r.hasNextPage || !r.cursor) {
+      complete = true;
+      break;
+    }
     cursor = r.cursor;
   }
-  cache.set(owner, { at: Date.now(), blobs });
-  return blobs;
+  const out = { at: Date.now(), blobs, complete };
+  cache.set(owner, out);
+  return out;
 }

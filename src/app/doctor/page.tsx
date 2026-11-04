@@ -10,7 +10,7 @@ import s from "./doctor.module.css";
 
 type Res = {
   status?: string; error?: string; via?: string; who?: string; exp?: number | null; empty?: boolean;
-  clinical?: Clinical; sources?: Source[];
+  clinical?: Clinical; sources?: Source[]; reviewTags?: Record<string, string>;
   proof?: { accountId: string; version: string; checkpoint: string | null; walrusEpoch: number | null; checkedAt: string } | null;
 };
 
@@ -54,11 +54,11 @@ function DoseChart({ meds, sources, account }: { meds: Clinical["medications"]; 
 
 type Verdict = "addressed" | "watch";
 
-function Review({ item, token }: { item: string; token: string }) {
+function Review({ item, token, tag }: { item: string; token: string; tag: string }) {
   const [state, setState] = useState<{ v: Verdict; busy?: boolean; error?: string } | null>(null);
   const send = async (v: Verdict) => {
     setState({ v, busy: true });
-    const r = await fetch("/api/doctor/review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: token, item, verdict: v }) })
+    const r = await fetch("/api/doctor/review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: token, item, verdict: v, tag }) })
       .then((x) => x.json()).catch((e) => ({ error: String(e) }));
     setState(r.error ? { v, error: r.error } : { v });
   };
@@ -93,7 +93,7 @@ export default function DoctorPage() {
   const c = res?.clinical;
   const src = res?.sources ?? [];
   const token = res?.via === "link" && typeof body?.t === "string" ? body.t : null;
-  const account = typeof body?.account === "string" ? body.account : undefined;
+  const account = typeof body?.account === "string" ? body.account : res?.proof?.accountId;
   const reviews = src.filter((x) => x.kind === "review");
   return (
     <div className={s.page}>
@@ -136,7 +136,7 @@ export default function DoctorPage() {
                     <ul>{items.map((it, j) => (
                       <li key={j}>
                         {it.text}<Refs refs={it.refs} sources={src} account={account} />
-                        {token && (k === "flags" || k === "questions") && <Review item={it.text} token={token} />}
+                        {token && (k === "flags" || k === "questions") && res.reviewTags?.[it.text] && <Review item={it.text} token={token} tag={res.reviewTags[it.text]} />}
                       </li>
                     ))}</ul>
                   </section>
