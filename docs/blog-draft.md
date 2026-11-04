@@ -4,10 +4,12 @@ Every new doctor starts with the same question: "So, what's your history?" Most 
 
 ## What it does
 
-1. **Record.** After a visit, flare-up, prescription or reading, you write or dictate what happened in plain words. Anamnesis splits it into atomic facts (symptom, medication, reaction, diagnosis, clinician instruction, measurement, follow-up), each dated, and files every fact as its own memory on Walrus.
-2. **Brief.** Before an appointment you say what it's for. Anamnesis recalls what matters and writes a one-page brief: what changed since last time, current meds, patterns across visits, questions to ask, and safety flags to raise. Every line cites the memories it came from.
-3. **Share.** Each doctor gets their own key. You switch it on in your Walrus Memory dashboard and off whenever you like. The doctor's link checks Sui on every open.
-4. **Ledger.** Shows proof, read live from Sui mainnet, that the record is yours and how long its storage is paid for.
+1. **Your own record.** Tapping "Start my record" creates a private record key that stays on your device, plus a record card (the key and a QR code) for opening it on another phone. Each key maps to its own Walrus Memory namespace, so a refresh or a visit a week later brings back your history and nobody else's. If you want the account itself to be yours, you can link your own Walrus Memory account instead.
+2. **Note.** After a visit, flare-up, prescription or reading, write or dictate what happened in plain words, or photograph the prescription, lab sheet or discharge letter. Anamnesis splits it into atomic facts (symptom, medication, reaction, diagnosis, clinician instruction, measurement, follow-up), each dated, and files every fact as its own memory.
+3. **Today.** The home screen is a snapshot, not a feed: what you take now, what's still open (for example "ECG due"), allergies, the last visit, and what to raise next time. Every line links to the memories behind it. The full history lives in a searchable timeline.
+4. **Brief.** Before an appointment, say what it's for. Anamnesis writes a one-page brief: what changed, current meds, patterns across visits, questions to ask, and flags to raise. Every line is cited.
+5. **Doctor links and an emergency card.** A signed link gives one doctor read access to your record for a day, a week or three months, and you can revoke it whenever you like. The doctor sees medicines over time as a dose chart, what changed, flags and your questions, each with its source. The emergency card puts allergies, current medicines, conditions and a contact behind a QR code that responders can scan.
+6. **Proof.** The Ledger shows, live from Sui mainnet, that the record is held on Walrus and how long its storage is paid for.
 
 ## How it learns over time
 
@@ -25,22 +27,23 @@ The brief for the 8-week neurology follow-up then asks whether the ECG was done,
 
 ## How it uses Walrus Memory
 
-- `@mysten-incubation/memwal` on the mainnet relayer, namespace `anamnesis`.
-- `rememberBulk` + `waitForRememberJobs` for multi-fact intake, with each fact tagged `[kind · date]` so the record view can sort and filter it.
-- `recall` runs several targeted queries in parallel (purpose, meds, reactions, instructions, earlier briefs) and merges the results by blob ID.
-- `listMemories` provides the ledger: blob IDs, sizes, and the epoch storage is paid through.
-- Delegate keys provide sharing. `generateDelegateKey` creates a key per doctor, and the doctor's view recalls with *their* key, not the app's.
+- `@mysten-incubation/memwal` on the mainnet relayer. Every patient's record gets its own namespace, `p_` followed by a hash of their record key. The sample patient sits in its own namespace and is read-only.
+- `rememberBulk` + `waitForRememberJobs` handle multi-fact intake. Each fact is tagged `[kind · date]`, which lets Today, the timeline and the doctor view sort and filter.
+- `recall` runs several targeted queries in parallel (purpose, meds, reactions, instructions, earlier briefs) and merges the results by blob ID. Every citation links to its Walrus blob.
+- Sharing is memory too. Issuing and revoking a doctor or emergency link each files a `share` memory, and every open checks the signed link against those memories. Revoking takes effect on the next open.
+- `listMemories` feeds the ledger with blob IDs, sizes, and the epoch the storage is paid through.
 
 ## How it uses Tatum
 
 All chain reads go through Tatum's Sui mainnet gRPC gateway. Tatum marks Sui JSON-RPC as deprecated, so this uses the modern path: `SuiGrpcClient` over native gRPC with `x-api-key` metadata. One gotcha: the gateway speaks native gRPC, not gRPC-web, so you need `@protobuf-ts/grpc-transport` with `@grpc/grpc-js` rather than the default fetch transport.
 
-- The **Ledger** reads the patient's MemWal `Account` object (owner, version, registered delegate keys, last transaction), the Walrus system object's current epoch, and the latest checkpoint.
-- **Live revocation:** when a doctor opens their link, the server derives the key's public key and checks over Tatum that it's still on the account object. If you've revoked it, nothing is recalled.
+- The **Ledger** reads the MemWal `Account` object (owner, version, registered delegate keys, last transaction), the Walrus system object's current epoch, and the latest checkpoint.
+- The **doctor view** puts the same proof under every page: the Sui checkpoint and the Walrus epoch at the moment the doctor opened the link.
+- **Your own account:** if a patient links their own Walrus account, a doctor can also use one of its delegate keys. Over Tatum, the server then checks that the key is still registered on the account object before it recalls anything.
 
 ## Try it
 
-- Demo: https://anamnesis-inky.vercel.app
+- Demo: https://anamnesis-inky.vercel.app (start a record, or open the sample patient)
 - Code: https://github.com/PinnacleCryptNG/anamnesis
 
 Built with Next.js, Walrus Memory, Tatum, and Claude. Anamnesis organises what you tell it; it does not diagnose.
