@@ -69,6 +69,9 @@ export function parseEntry(m: RecallMemory): Entry {
   };
 }
 
+const sampleUntil = () => (process.env.MEMWAL_SAMPLE_UNTIL || "").trim();
+const inSample = (ctx: Ctx, date: string) => !ctx.sample || !sampleUntil() || !date || date <= sampleUntil();
+
 export async function recallMany(
   queries: string[],
   opts: { limit?: number; key?: string; accountId?: string; ctx?: Ctx; sort?: "relevance" | "recent" } = {},
@@ -91,7 +94,7 @@ export async function recallMany(
     const failed = results.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
     if (failed) throw failed.reason;
   }
-  return [...seen.values()].sort((a, b) => (a.date < b.date ? 1 : -1));
+  return [...seen.values()].filter((e) => inSample(ctx, e.date)).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 export async function rememberAll(texts: string[], ctx: Ctx = SAMPLE): Promise<{ text: string; blobId?: string; jobId: string }[]> {
@@ -117,7 +120,7 @@ export async function listBlobs(ctx: Ctx, pages = 3) {
   let cursor: string | undefined;
   for (let i = 0; i < pages; i++) {
     const page = await client.listMemories({ namespace: ctx.ns, limit: 500, cursor });
-    out.push(...page.memories);
+    out.push(...page.memories.filter((m) => inSample(ctx, ((m as { text?: string }).text || "").match(ENTRY_RE)?.[2] || "")));
     if (!page.has_more || !page.next_cursor) break;
     cursor = page.next_cursor;
   }

@@ -1,53 +1,61 @@
 # Anamnesis
 
-Live demo: https://anamnesis-inky.vercel.app (a sample migraine history, 50 memories on Walrus mainnet)
+A medical history you own. Tell it what happened at a visit, or photograph the prescription, and Anamnesis files each fact as a Walrus Memory on Sui mainnet. It recalls related history before filing, so later notes link back to earlier ones. Before an appointment it writes a one-page brief where every line cites its memory. A doctor gets a time-limited, revocable link to a clinician view, and every proof is read from Sui through Tatum.
 
-![Anamnesis: your medical history, remembered](src/app/opengraph-image.jpg)
+Live: https://anamnesis-inky.vercel.app
 
-The front page (`/`) explains the product; the record itself lives at `/record`, with Brief, Share and Ledger as tabs of the same folder. The logo mark, favicon, share image and section icons are drawn for this project (`src/components/Icons.tsx`).
+## Using it
 
-*Anamnesis* (Greek: recollection) is the medical word for a patient's history. This app is a medical history the patient owns. After each visit, flare-up or new prescription, you write or dictate what happened. Anamnesis breaks the note into separate facts and files each one as a memory on **Walrus Memory (Sui mainnet)**. Each fact is checked against everything filed before. Before an appointment, it recalls what matters and writes a one-page brief, with every line citing the memory it came from.
+- **Start my record** (`/start`) creates a private record. A 20-character record key is generated on your device and stored there, so a refresh or a visit weeks later opens the same record. The **record card** (key + QR to `/open#k=…`) opens it on another device. Nothing is shared between visitors.
+- **Today** (`/today`) is the home screen: what you take now, open follow-ups, allergies, conditions, last visit and what to raise next time, each with citations to its memories.
+- **Timeline** (`/timeline`) holds the full record grouped by month and day, with kind filters, text filter and "ask the record" answers with citations.
+- **New note** (`/record`) keeps the ruled notepad. Type, dictate, or attach a photo of a prescription, lab sheet or discharge letter; Claude vision reads it and the facts are filed.
+- **Brief** (`/brief`) prepares a cited appointment brief and files it, so the next brief knows what you asked last time.
+- **Share** (`/share`) issues doctor links for 1 day to 3 months and revokes them. Doctors open `/doctor#t=…`: summary, allergies, a dose chart of medicines over time, what changed, flags, open questions and readings, all cited.
+- **Emergency card** (`/emergency`) puts allergies, medicines, conditions and an emergency contact on one card with a QR to `/e#t=…` for responders.
+- **Proof on Sui** (`/ledger`) reads the Walrus account, delegate keys, Walrus epoch, Sui checkpoint and blob list.
+- **Sample patient** (`/sample`) is a read-only five-month migraine history for trying everything without writing.
 
-Built for **Total Recall: the Tatum × Walrus Memory Hackathon** (Smart Agents for Real Life track).
+## Privacy model
+
+- Each hosted record is its own Walrus Memory namespace, `p_` + the first 32 hex chars of `sha256("anamnesis-record:" + key)`. The key never leaves the browser except in the `x-record` header of the patient's own requests; the server cannot list keys.
+- Anyone holding a record key can read that record, so the record card should be kept like a house key.
+- For full ownership, link your own Walrus Memory account on `/start` (account ID + delegate key, kept on the device and sent as `x-memwal-account` / `x-memwal-key`). Share that record by adding a delegate key in the Walrus dashboard; the doctor view checks on Sui through Tatum that the key is still registered.
+- Doctor and emergency links are HMAC-signed tokens (`SHARE_SECRET`) carrying the namespace, scope and expiry. Issuing and revoking are filed as `share` memories in the patient's record, and every open checks revocations first.
+- The sample patient can't be written to without `APP_PASSCODE`.
 
 ## How it learns over time
 
-| Memories filed | What the brief can do |
-| --- | --- |
-| 1 visit | Repeat back what you said |
-| A few visits | List current meds with doses and what changed since last time |
-| Weeks of notes | Link events across dates, e.g. "nausea began 3 days after the metformin increase [4][7]", or a falling BP trend across readings |
-| Earlier briefs | Every brief is filed too, so the next one knows which questions you already asked and which are still open |
-
-Intake also recalls the most related older memories *before* filing. When a new note connects to the past, it writes a `pattern` memory, so later recalls find the link directly.
+Every note is compared with recalled history before filing. The model writes atomic facts (`symptom`, `medication`, `reaction`, `allergy`, `diagnosis`, `clinician`, `measurement`, `followup`) plus `pattern` memories that link them, for example a headache trend that started after a dose change. Today, briefs and the doctor view are built from recall, so they get sharper as memories accumulate; briefs are filed too.
 
 ## How it uses Walrus Memory
 
-- `@mysten-incubation/memwal` against the mainnet relayer `https://relayer.memory.walrus.xyz`, namespace `anamnesis`.
-- `rememberBulk` + `waitForRememberJobs` write atomic facts tagged `[kind · date]` (symptom, medication, reaction, diagnosis, clinician, measurement, followup, pattern, brief).
-- `recall` runs several targeted queries in parallel (purpose, meds, reactions, instructions, earlier briefs) and dedupes the results by blob ID.
-- `listMemories` lists the stored blobs and how long their storage is paid for.
-- **Doctor sharing via delegate keys:** the app generates a fresh Ed25519 delegate key (`generateDelegateKey`). The patient registers its public key in their Walrus Memory dashboard and sends the doctor a link carrying the private key in the URL fragment. The doctor's view reads the record *with the doctor's own key*. Revoking the key in the dashboard ends access.
+`@mysten-incubation/memwal` against the public relayer on Sui mainnet: `rememberBulk` + `waitForRememberJobs` for filing, semantic `recall` across several queries for Today, briefs, answers and the doctor view, and `listMemories` for the timeline and ledger. Each memory is a Walrus blob linked on walruscan.
 
 ## How it uses Tatum
 
-All onchain reads go through **Tatum's Sui mainnet gRPC gateway** (`sui-mainnet-grpc.gateway.tatum.io`, `x-api-key` auth). Tatum documents JSON-RPC as deprecated, so the app uses `SuiGrpcClient` from `@mysten/sui` over a native gRPC transport:
-
-- **Ledger:** reads the patient's MemWal `Account` object (owner, version, digest, registered delegate keys, last transaction), the Walrus system object's current epoch, and the latest checkpoint.
-- **Live access check:** every time a doctor link is opened, the server derives the link key's public key and confirms over Tatum that it is still registered on the account object. If it isn't, nothing is recalled.
+Tatum's Sui mainnet gRPC gateway (`sui-mainnet-grpc.gateway.tatum.io:443`, native gRPC with TLS and `x-api-key`) reads the Walrus Memory account object and its delegate keys, the Walrus system object's dynamic field for the current epoch, and the latest checkpoint. The doctor view stamps each open with the checkpoint and epoch it was checked at, and delegate-key sharing is verified there.
 
 ## Run it
 
 ```bash
 pnpm install
-cp .env.example .env.local   # fill in the four values
+cp .env.example .env.local   # or set the variables below
 pnpm dev
 ```
 
-Node 22.23+ / 24.22+ (required by the MemWal SDK).
+| Variable | Purpose |
+| --- | --- |
+| `MEMWAL_ACCOUNT_ID` | Walrus Memory account ID (the `0x…` account object, not the delegate public key) |
+| `MEMWAL_KEY` | Delegate private key registered on that account |
+| `TATUM_API_KEY` | Tatum API key for Sui mainnet gRPC |
+| `LLM_API_KEY` | Anthropic key (Claude Sonnet, including vision) |
+| `SHARE_SECRET` | Secret that signs doctor and emergency links |
+| `APP_PASSCODE` | Optional; allows writes to the sample patient |
+| `MEMWAL_NAMESPACE` | Sample patient namespace (default `anamnesis`) |
+| `MEMWAL_SAMPLE_UNTIL` | Optional; hide sample memories dated after this day |
+| `MEMWAL_RELAYER` | Optional relayer URL |
 
 ## Stack
 
-Next.js 15 (App Router), React 19, `@mysten-incubation/memwal`, `@mysten/sui` gRPC, `@anthropic-ai/sdk` (Claude Sonnet 4.6), zod. Typography: Libre Caslon Text, Atkinson Hyperlegible (designed for low-vision readers), IBM Plex Mono.
-
-Anamnesis organises what you tell it. It does not diagnose or give medical advice.
+Next.js 16 (App Router) on Vercel, TypeScript, CSS Modules, Libre Caslon + Instrument Sans + a mono face, `qrcode` for record and emergency cards. Logo, favicon, share image and every icon are drawn for this project in `src/components/Icons.tsx`.
