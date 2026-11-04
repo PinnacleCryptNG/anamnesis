@@ -8,6 +8,10 @@ const STOP = new Set(
 
 const words = (s: string) =>
   new Set((s.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) ?? []).map((w) => w.replace(/s$/, "")).filter((w) => !STOP.has(w)));
+const similar = (a: Set<string>, b: Set<string>) => {
+  const shared = [...a].filter((x) => b.has(x)).length;
+  return shared >= 2 && shared / Math.max(1, Math.min(a.size, b.size)) >= 0.5;
+};
 const norm = (s: string) => s.toLowerCase().replace(/["']/g, "").replace(/\s+/g, " ").trim();
 export const srcKey = (blobId?: string) => (blobId || "").slice(0, 8);
 
@@ -37,16 +41,17 @@ export function dropAddressed<T extends Cited>(items: T[], sources: Src[]): T[] 
   return items.filter((it) => {
     const refs = it.refs.map((n) => byN.get(n)).filter((s): s is Src => !!s);
     const cited = refs.filter((s) => s.kind !== "review");
-    const watched = refs.filter((s) => s.kind === "review" && /marked it keep watching/.test(s.body));
+    const watched = refs
+      .filter((s) => s.kind === "review" && /marked it keep watching/.test(s.body))
+      .map((s) => ({ ...s, item: s.body.match(/reviewed "(.+?)" and marked it/)?.[1] ?? "" }));
     const w = words(it.text);
     return !matters.some((m) => {
-      if (cited.some((s) => after(s, m)) || watched.some((s) => after(s, m))) return false;
+      if (cited.some((s) => after(s, m)) || watched.some((s) => after(s, m) && (norm(s.item) === m.key || similar(words(s.item), m.words)))) return false;
       if (norm(it.text) === m.key) return true;
       if (cited.length) {
         if (!m.src.size || !cited.every((s) => m.src.has(srcKey(s.blobId)))) return false;
       } else if (!refs.some((s) => s.n === m.n)) return false;
-      const shared = [...w].filter((x) => m.words.has(x)).length;
-      return shared >= 2 && shared / Math.max(1, Math.min(w.size, m.words.size)) >= 0.5;
+      return similar(w, m.words);
     });
   });
 }
