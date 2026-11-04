@@ -4,6 +4,13 @@ import s from "./BriefView.module.css";
 type Cited = { text: string; refs: number[] };
 export type BriefT = { headline: string; sinceLast: Cited[]; medications: Cited[]; patterns: Cited[]; questions: Cited[]; watch: Cited[]; gaps: string[] };
 
+type Loose = string | { text?: unknown; item?: unknown; refs?: unknown };
+const asText = (v: unknown): string => (typeof v === "string" ? v : v && typeof v === "object" ? asText((v as { text?: unknown; item?: unknown }).text ?? (v as { item?: unknown }).item ?? "") : v == null ? "" : String(v));
+const asCited = (v: unknown): Cited[] =>
+  Array.isArray(v)
+    ? v.map((x: Loose) => ({ text: asText(x), refs: typeof x === "object" && Array.isArray(x.refs) ? x.refs.map(Number).filter(Number.isFinite) : [] })).filter((c) => c.text)
+    : [];
+
 const SECTIONS: [keyof BriefT, string][] = [
   ["sinceLast", "Since last time"],
   ["medications", "Medications now"],
@@ -16,9 +23,9 @@ export default function BriefView({ brief, sources }: { brief: BriefT; sources: 
   const byN = new Map(sources.map((x) => [x.n, x]));
   return (
     <article>
-      <p className={s.headline}>{brief.headline}</p>
+      <p className={s.headline}>{asText(brief.headline)}</p>
       {SECTIONS.map(([k, label], i) => {
-        const items = (brief[k] as Cited[]) || [];
+        const items = asCited(brief[k]);
         if (!items.length) return null;
         return (
           <section key={k} className={`${s.block} ${k === "watch" ? s.watch : ""}`} style={{ "--i": i } as React.CSSProperties}>
@@ -36,10 +43,10 @@ export default function BriefView({ brief, sources }: { brief: BriefT; sources: 
           </section>
         );
       })}
-      {brief.gaps?.length ? (
+      {asCited(brief.gaps).length ? (
         <section className={s.block} style={{ "--i": 6 } as React.CSSProperties}>
           <h3>Not in the record yet</h3>
-          <ul>{brief.gaps.map((g, j) => <li key={j}>{g}</li>)}</ul>
+          <ul>{asCited(brief.gaps).map((g, j) => <li key={j}>{g.text}</li>)}</ul>
         </section>
       ) : null}
       <details className={s.sources}>
