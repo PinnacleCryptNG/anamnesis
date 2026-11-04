@@ -61,10 +61,13 @@ export async function readAccount(accountId = process.env.MEMWAL_ACCOUNT_ID || "
   let walrusEpoch: number | null = null;
   let checkpoint: string | null = null;
   try {
-    const sys = await throttled(() => sui.getObject({ objectId: WALRUS_SYSTEM_OBJECT, include: { json: true } }));
-    const sj = jsonSafe(sys.object.json) as Record<string, unknown> | null;
-    const e = sj && (sj.epoch ?? (sj.inner as Record<string, unknown> | undefined)?.epoch);
-    walrusEpoch = e != null ? Number(e) : null;
+    const { dynamicFields } = await throttled(() => sui.listDynamicFields({ parentId: WALRUS_SYSTEM_OBJECT }));
+    const inner = dynamicFields.find((f) => f.valueType.endsWith("::SystemStateInnerV1"));
+    if (inner) {
+      const st = await throttled(() => sui.getObject({ objectId: inner.fieldId, include: { json: true } }));
+      const v = (st.object.json as { value?: { committee?: { epoch?: unknown } } } | null)?.value;
+      walrusEpoch = v?.committee?.epoch != null ? Number(v.committee.epoch) : null;
+    }
   } catch {}
   try {
     const info = await throttled(() => sui.ledgerService.getServiceInfo({}).response);
