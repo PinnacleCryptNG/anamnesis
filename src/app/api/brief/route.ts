@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     );
     const sources = numbered(entries.filter((e) => e.kind !== "share"));
     if (!sources.length) return NextResponse.json({ error: "Nothing is filed yet. Add a note first, then prepare a brief." }, { status: 400 });
-    const brief = await completeJson<Brief>(BRIEF_SYSTEM, `Today: ${today()}. Appointment: ${purpose}.\n\nRecord:\n${asLines(sources)}`, 2200);
+    const brief = await completeJson<Brief>(BRIEF_SYSTEM, `Today is ${today()}. Upcoming appointment: ${purpose} (its date is not given; do not assume it is today). Work out intervals from the dated entries, and only call something due, overdue or "today" by comparing its due date with ${today()}.\n\nRecord:\n${asLines(sources)}`, 2200);
     let savedJob: string | null = null;
     if (!ctx.sample) {
       const [saved] = await rememberAll(

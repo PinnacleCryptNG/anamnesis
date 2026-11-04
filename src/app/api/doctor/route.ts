@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     if (!sources.length) return NextResponse.json({ status: "active", empty: true, who, exp, via });
     const clinical = normalizeClinical(await completeJson<unknown>(
       CLINICAL_SYSTEM,
-      `Today: ${today()}.${purpose ? ` Reason for visit: ${purpose}.` : ""}\n\nRecord:\n${asLines(sources)}`,
+      `Today is ${today()}. Only call something due, overdue or "today" by comparing its date with today.${purpose ? ` Reason for visit: ${purpose}.` : ""}\n\nRecord:\n${asLines(sources)}`,
       2600,
     ));
     return NextResponse.json({

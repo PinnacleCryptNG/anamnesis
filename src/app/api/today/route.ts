@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     const entries = (await recallMany(QUERIES, { limit: 14, ctx })).filter((e) => e.kind !== "brief" && e.kind !== "share");
     if (!entries.length) return NextResponse.json({ snapshot: null, sources: [], recent: [], count: 0 });
     const sources = numbered(entries);
-    const snapshot = normalizeSnapshot(await completeJson<unknown>(SNAPSHOT_SYSTEM, `Today: ${today()}.\n\nRecord:\n${asLines(sources)}`, 1600));
+    const snapshot = normalizeSnapshot(await completeJson<unknown>(SNAPSHOT_SYSTEM, `Today is ${today()}. Only call something due, overdue or "today" by comparing its date with today.\n\nRecord:\n${asLines(sources)}`, 1600));
     return NextResponse.json({ snapshot, sources, recent: sources.slice(0, 5), count: entries.length });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 502 });

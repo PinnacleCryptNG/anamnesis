@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     );
     const sources = numbered(entries.filter((e) => e.kind !== "share" && e.kind !== "brief"));
     const snapshot = sources.length
-      ? normalizeSnapshot(await completeJson<unknown>(SNAPSHOT_SYSTEM, `Today: ${today()}.\n\nRecord:\n${asLines(sources)}`, 1400))
+      ? normalizeSnapshot(await completeJson<unknown>(SNAPSHOT_SYSTEM, `Today is ${today()}. Only call something due, overdue or "today" by comparing its date with today.\n\nRecord:\n${asLines(sources)}`, 1400))
       : null;
     return NextResponse.json({ card: opened.share.card ?? {}, snapshot, sources });
   } catch (e) {
