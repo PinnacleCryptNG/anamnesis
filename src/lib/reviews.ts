@@ -13,13 +13,13 @@ export const srcKey = (blobId?: string) => (blobId || "").slice(0, 8);
 
 /** Items whose latest doctor review says "addressed", with the source memories the reviewed item cited. */
 export function addressedMatters(sources: Src[]) {
-  const latest = new Map<string, { verdict: string; date: string; at: string; src: Set<string>; words: Set<string> }>();
+  const latest = new Map<string, { n: number; verdict: string; date: string; at: string; src: Set<string>; words: Set<string> }>();
   const order = (s: Src) => `${s.date} ${s.writtenAt ?? ""}`;
   for (const s of sources.filter((x) => x.kind === "review").sort((a, b) => order(a).localeCompare(order(b)))) {
     const m = s.body.match(/reviewed "(.+?)" and marked it (addressed|keep watching)/);
     if (!m) continue;
     const src = new Set((s.body.match(/Sources: ([A-Za-z0-9_\-, ]+)\./)?.[1] ?? "").split(/[,\s]+/).filter(Boolean));
-    latest.set(norm(m[1]), { verdict: m[2], date: s.date, at: s.writtenAt ?? "", src, words: words(m[1]) });
+    latest.set(norm(m[1]), { n: s.n, verdict: m[2], date: s.date, at: s.writtenAt ?? "", src, words: words(m[1]) });
   }
   return [...latest].filter(([, v]) => v.verdict === "addressed").map(([key, v]) => ({ key, ...v }));
 }
@@ -35,12 +35,16 @@ export function dropAddressed<T extends Cited>(items: T[], sources: Src[]): T[] 
   const after = (s: Src, m: { date: string; at: string }) =>
     s.date > m.date || (s.date === m.date && (!s.writtenAt || !m.at || s.writtenAt > m.at));
   return items.filter((it) => {
-    const cited = it.refs.map((n) => byN.get(n)).filter((s): s is Src => !!s && s.kind !== "review");
+    const refs = it.refs.map((n) => byN.get(n)).filter((s): s is Src => !!s);
+    const cited = refs.filter((s) => s.kind !== "review");
+    const watched = refs.filter((s) => s.kind === "review" && /marked it keep watching/.test(s.body));
     const w = words(it.text);
     return !matters.some((m) => {
-      if (cited.some((s) => after(s, m))) return false;
+      if (cited.some((s) => after(s, m)) || watched.some((s) => after(s, m))) return false;
       if (norm(it.text) === m.key) return true;
-      if (!it.refs.length || !m.src.size || !cited.every((s) => m.src.has(srcKey(s.blobId)))) return false;
+      if (cited.length) {
+        if (!m.src.size || !cited.every((s) => m.src.has(srcKey(s.blobId)))) return false;
+      } else if (!refs.some((s) => s.n === m.n)) return false;
       const shared = [...w].filter((x) => m.words.has(x)).length;
       return shared >= 2 && shared / Math.max(1, Math.min(w.size, m.words.size)) >= 0.5;
     });
