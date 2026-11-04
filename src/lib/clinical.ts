@@ -1,4 +1,4 @@
-import { asCited, asList, asRefs, asText, type Cited } from "./cite";
+import { asCited, asList, asRefs, asText, splitRefs, type Cited } from "./cite";
 
 export type Med = { name: string; dose: string; since?: string; note?: string; refs: number[] };
 export type Snapshot = {
@@ -12,7 +12,7 @@ export type Snapshot = {
 };
 
 export const SNAPSHOT_SYSTEM = `You keep the front page of a patient's own medical record. From the numbered record lines, state where things stand today.
-Every item cites the line numbers it rests on in "refs". Never invent, diagnose or advise. Prefer the latest line when lines disagree (a stopped drug is not current). A patient's question stays a question: 'whether X can cause Y' never becomes 'X is causing Y'. Only state that a symptom happened if a line records it happening.
+Every item cites the line numbers it rests on in "refs". Never invent, diagnose or advise. Prefer the latest line when lines disagree (a stopped drug is not current). A patient's question stays a question: 'whether X can cause Y' never becomes 'X is causing Y'. Only state that a symptom happened if a line records it happening. Lines of kind "review" are a doctor's verdict on an earlier item. Marked addressed (and no later line reopens it): leave it out of every open, flag, watch, question and follow-up list; at most say once, in a "what changed" field, that the doctor marked it addressed. Marked keep watching: keep it listed and say the doctor asked to keep watching it. Use only what the lines say; never add outside medical knowledge such as known side effects or drug effects.
 Fields:
 - headline: one calm sentence on where things stand, under 22 words, written to the patient ("you").
 - medications: what the patient takes now: name, dose (with units and frequency), since (YYYY-MM-DD if known), note (short, e.g. "raised from 25mg"). Exclude stopped drugs.
@@ -27,20 +27,30 @@ Exact shape:
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
 
+const cited = (v: unknown, text = asText(v)) => {
+  const inline = splitRefs(text);
+  return { text: inline.text, refs: [...new Set([...asRefs(v), ...inline.refs])] };
+};
+
 export function normalizeSnapshot(raw: unknown): Snapshot {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const lv = o.lastVisit as Record<string, unknown> | null | undefined;
   return {
     headline: asText(o.headline),
     medications: asList<Record<string, unknown>>(o.medications)
-      .map((m) => ({ name: asText(m.name ?? m.drug ?? m), dose: asText(m.dose), since: str(m.since), note: str(m.note), refs: asRefs(m) }))
+      .map((m) => {
+        const name = cited(m, asText(m.name ?? m.drug ?? m));
+        const dose = splitRefs(asText(m.dose));
+        const note = splitRefs(asText(m.note));
+        return { name: name.text, dose: dose.text, since: str(m.since), note: str(note.text), refs: [...new Set([...name.refs, ...dose.refs, ...note.refs])] };
+      })
       .filter((m) => m.name),
     followups: asList<Record<string, unknown>>(o.followups)
-      .map((f) => ({ text: asText(f), due: str((f as Record<string, unknown>)?.due), refs: asRefs(f) }))
+      .map((f) => ({ ...cited(f), due: str((f as Record<string, unknown>)?.due) }))
       .filter((f) => f.text),
     allergies: asCited(o.allergies),
     conditions: asCited(o.conditions),
-    lastVisit: lv && asText(lv) ? { text: asText(lv.text ?? lv), date: str(lv.date), refs: asRefs(lv) } : null,
+    lastVisit: lv && asText(lv) ? { ...cited(lv, asText(lv.text ?? lv)), date: str(lv.date) } : null,
     watch: asCited(o.watch),
   };
 }
@@ -57,7 +67,7 @@ export type Clinical = {
 };
 
 export const CLINICAL_SYSTEM = `You prepare the clinician's view of a patient-kept record they were given access to.
-The reader is a doctor with five minutes. Every item cites the numbered record lines in "refs". Do not invent or diagnose; say what the patient recorded.
+The reader is a doctor with five minutes. Every item cites the numbered record lines in "refs". Do not invent or diagnose; say what the patient recorded. Lines of kind "review" are a doctor's verdict on an earlier item. Marked addressed (and no later line reopens it): leave it out of every open, flag, watch, question and follow-up list; at most say once, in a "what changed" field, that the doctor marked it addressed. Marked keep watching: keep it listed and say the doctor asked to keep watching it. Use only what the lines say; never add outside medical knowledge such as known side effects or drug effects.
 Fields:
 - summary: two sentences: who this is clinically and what is active now.
 - medications: one entry per drug ever recorded. status current|stopped. segments in date order, each a period at one dose: dose (units and frequency), start (YYYY-MM-DD), end (YYYY-MM-DD or null if ongoing), refs.

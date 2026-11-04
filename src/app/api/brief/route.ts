@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { completeJson } from "@/lib/llm";
+import { dropAddressed } from "@/lib/reviews";
 import { asLines, formatEntry, numbered, recallMany, rememberAll, today } from "@/lib/memory";
 import { recordCtx } from "@/lib/record";
 import { BRIEF_SYSTEM, type Brief } from "@/lib/brief";
@@ -27,12 +28,15 @@ export async function POST(req: Request) {
         "doctor instructions and follow-ups",
         "patterns noticed",
         "previous appointment brief",
+        "doctor reviews: marked addressed or keep watching",
       ],
       { limit: 12, ctx },
     );
     const sources = numbered(entries.filter((e) => e.kind !== "share"));
     if (!sources.length) return NextResponse.json({ error: "Nothing is filed yet. Add a note first, then prepare a brief." }, { status: 400 });
     const brief = await completeJson<Brief>(BRIEF_SYSTEM, `Today is ${today()}. Upcoming appointment: ${purpose} (its date is not given; do not assume it is today). Work out intervals from the dated entries, and only call something due, overdue or "today" by comparing its due date with ${today()}.\n\nRecord:\n${asLines(sources)}`, 2200);
+    brief.watch = dropAddressed(asCited(brief.watch), sources);
+    brief.questions = dropAddressed(asCited(brief.questions), sources);
     let savedJob: string | null = null;
     if (!ctx.sample) {
       const [saved] = await rememberAll(

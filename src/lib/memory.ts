@@ -15,6 +15,7 @@ export const KINDS = [
   "pattern",
   "brief",
   "share",
+  "review",
 ] as const;
 export type Kind = (typeof KINDS)[number];
 

@@ -22,7 +22,7 @@ type Extracted = {
   ack: string;
 };
 
-const FACT_KINDS = KINDS.filter((k) => !["brief", "pattern", "share"].includes(k)).join(", ");
+const FACT_KINDS = KINDS.filter((k) => !["brief", "pattern", "share", "review"].includes(k)).join(", ");
 
 const SYSTEM = `You are the clerk of a patient's personal medical record called Anamnesis.
 The patient dictates notes after visits, flare-ups, pharmacy runs, or test results, and sometimes photographs a prescription, pill box, lab report or discharge letter.
@@ -31,7 +31,7 @@ Split everything into atomic, self-contained facts a future clinician could read
 Each fact: kind (one of ${FACT_KINDS}), date (YYYY-MM-DD), text (one plain sentence, include names, doses, units, who said it, and "from photo of …" when it came from the photo).
 Use "allergy" only for allergies and serious adverse drug reactions.
 Keep what happened apart from what the patient wants to ask: a worry or question ("I want to ask about ankle swelling") is filed as a question to raise, not as a symptom that occurred.
-Then compare with the prior record you are given and add "patterns": only links that the new note plus older facts genuinely support (e.g. a symptom that began after a dose change, a reading trend, a repeated trigger). Cite the old dates in the text. Never diagnose. Zero patterns is fine.
+Then compare with the prior record you are given and add "patterns": only links that the new note plus older facts genuinely support (e.g. a symptom that began after a dose change, a reading trend, a repeated trigger). Cite the old dates in the text. Never diagnose, and add no outside medical knowledge (such as a drug's known side effects or its drug class): state only the link in time the record shows and leave the question of cause to the doctor. Zero patterns is fine.
 "ack": one short sentence back to the patient about what was filed and anything that connected to older history.`;
 
 export async function POST(req: Request) {
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       2000,
       images,
     );
-    const facts = (out.facts || []).filter((f) => f.text && KINDS.includes(f.kind) && f.kind !== "share").slice(0, 12);
+    const facts = (out.facts || []).filter((f) => f.text && KINDS.includes(f.kind) && f.kind !== "share" && f.kind !== "review").slice(0, 12);
     const patterns = (out.patterns || []).filter((p) => p.text).slice(0, 3);
     const texts = [
       ...facts.map((f) => formatEntry(f.kind, /^\d{4}-\d{2}-\d{2}$/.test(f.date) ? f.date : date, f.text)),

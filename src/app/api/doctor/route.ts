@@ -4,8 +4,9 @@ import { MemWal } from "@mysten-incubation/memwal";
 import { readAccount, type AccountProof } from "@/lib/account";
 import { completeJson } from "@/lib/llm";
 import { asLines, numbered, recallMany, SAMPLE, today, type Ctx } from "@/lib/memory";
-import { openShare } from "@/lib/record";
+import { openShare, reviewTag } from "@/lib/record";
 import { CLINICAL_SYSTEM, normalizeClinical } from "@/lib/clinical";
+import { dropAddressed, srcKey } from "@/lib/reviews";
 
 export const maxDuration = 60;
 
@@ -27,6 +28,7 @@ const QUERIES = [
   "measurements, readings and lab results",
   "questions the patient wants answered",
   "patterns noticed",
+  "doctor reviews: marked addressed or keep watching",
 ];
 
 export async function POST(req: Request) {
@@ -39,6 +41,7 @@ export async function POST(req: Request) {
   let exp: number | null = null;
   let proof: AccountProof | null = null;
   let via: "link" | "delegate" | "sample";
+  let shareId: string | null = null;
   if (sample) {
     ctx = SAMPLE;
     who = "Sample patient";
@@ -50,6 +53,7 @@ export async function POST(req: Request) {
     ctx = opened.ctx;
     who = opened.share.who;
     exp = opened.share.exp;
+    shareId = opened.share.id;
     via = "link";
     proof = await readAccount().catch(() => null);
   } else {
@@ -74,6 +78,8 @@ export async function POST(req: Request) {
       `Today is ${today()}. Only call something due, overdue or "today" by comparing its date with today.${purpose ? ` Reason for visit: ${purpose}.` : ""}\n\nRecord:\n${asLines(sources)}`,
       2600,
     ));
+    clinical.flags = dropAddressed(clinical.flags, sources);
+    clinical.questions = dropAddressed(clinical.questions, sources);
     return NextResponse.json({
       status: "active",
       via,
@@ -81,6 +87,12 @@ export async function POST(req: Request) {
       exp,
       clinical,
       sources,
+      reviewTags: shareId
+        ? Object.fromEntries([...clinical.flags, ...clinical.questions].map((x) => [
+            x.text,
+            reviewTag(shareId!, x.text, x.refs.map((n) => srcKey(sources[n - 1]?.blobId)).filter(Boolean)),
+          ]))
+        : undefined,
       proof: proof && { accountId: proof.accountId, version: proof.version, checkpoint: proof.checkpoint, walrusEpoch: proof.walrusEpoch, checkedAt: proof.checkedAt },
     });
   } catch (e) {

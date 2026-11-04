@@ -10,8 +10,8 @@ Live: https://anamnesis-inky.vercel.app
 - **Today** (`/today`) is the home screen: what you take now, open follow-ups, allergies, conditions, last visit and what to raise next time, each with citations to its memories.
 - **Timeline** (`/timeline`) holds the full record grouped by month and day, with kind filters, text filter and "ask the record" answers with citations.
 - **New note** (`/record`) keeps the ruled notepad. Type, dictate, or attach a photo of a prescription, lab sheet or discharge letter; Claude vision reads it and the facts are filed.
-- **Brief** (`/brief`) prepares a cited appointment brief and files it, so the next brief knows what you asked last time.
-- **Share** (`/share`) issues doctor links for 1 day to 3 months and revokes them. Doctors open `/doctor#t=…`: summary, allergies, a dose chart of medicines over time, what changed, flags, open questions and readings, all cited.
+- **Brief** (`/brief`) prepares a cited appointment brief and files it, so the next brief knows what you asked last time. Tapping a citation shows its memories and checks each one's Walrus blob object on Sui through Tatum (`/api/verify`).
+- **Share** (`/share`) issues doctor links for 1 day to 3 months and revokes them. Doctors open `/doctor#t=…`: summary, allergies, a dose chart of medicines over time, what changed, flags, open questions and readings, all cited. The doctor can mark a flag or question **Addressed** or **Keep watching**; that files a `review` memory in the patient's record, and the next Today, brief and doctor view drop addressed items and keep watched ones.
 - **Emergency card** (`/emergency`) puts allergies, medicines, conditions and an emergency contact on one card with a QR to `/e#t=…` for responders.
 - **Proof on Sui** (`/ledger`) reads the Walrus account, delegate keys, Walrus epoch, Sui checkpoint and blob list.
 - **Sample patient** (`/sample`) is a read-only five-month migraine history for trying everything without writing.
@@ -26,7 +26,7 @@ Live: https://anamnesis-inky.vercel.app
 
 ## How it learns over time
 
-Every note is compared with recalled history before filing. The model writes atomic facts (`symptom`, `medication`, `reaction`, `allergy`, `diagnosis`, `clinician`, `measurement`, `followup`) plus `pattern` memories that link them, for example a headache trend that started after a dose change. Today, briefs and the doctor view are built from recall, so they get sharper as memories accumulate; briefs are filed too.
+Every note is compared with recalled history before filing. The model writes atomic facts (`symptom`, `medication`, `reaction`, `allergy`, `diagnosis`, `clinician`, `measurement`, `followup`) plus `pattern` memories that link them and `review` memories from doctors, for example a headache trend that started after a dose change. Today, briefs and the doctor view are built from recall, so they get sharper as memories accumulate; briefs are filed too.
 
 ## How it uses Walrus Memory
 
@@ -34,7 +34,7 @@ Every note is compared with recalled history before filing. The model writes ato
 
 ## How it uses Tatum
 
-Tatum's Sui mainnet gRPC gateway (`sui-mainnet-grpc.gateway.tatum.io:443`, native gRPC with TLS and `x-api-key`) reads the Walrus Memory account object and its delegate keys, the Walrus system object's dynamic field for the current epoch, and the latest checkpoint. The doctor view stamps each open with the checkpoint and epoch it was checked at, and delegate-key sharing is verified there.
+Tatum's Sui mainnet gRPC gateway (`sui-mainnet-grpc.gateway.tatum.io:443`, native gRPC with TLS and `x-api-key`) reads the Walrus Memory account object and its delegate keys, the Walrus system object's dynamic field for the current epoch, and the latest checkpoint. For citations it lists the account owner's Walrus `Blob` objects (`listOwnedObjects`, type `…::blob::Blob`), decodes each u256 `blob_id` to base64url and returns the object ID, certified epoch and paid-through epoch of every cited memory. The doctor view stamps each open with the checkpoint and epoch it was checked at, and delegate-key sharing is verified there.
 
 ## Run it
 

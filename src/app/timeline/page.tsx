@@ -10,7 +10,7 @@ import u from "@/components/ui.module.css";
 import s from "./timeline.module.css";
 
 type E = { blobId: string; kind: string; date: string; body: string };
-const KINDS: [string, string][] = [["symptom", "Symptoms"], ["medication", "Medicines"], ["reaction", "Reactions"], ["allergy", "Allergies"], ["diagnosis", "Diagnoses"], ["clinician", "Doctor's notes"], ["measurement", "Readings"], ["followup", "Follow-ups"], ["pattern", "Patterns"]];
+const KINDS: [string, string][] = [["symptom", "Symptoms"], ["medication", "Medicines"], ["reaction", "Reactions"], ["allergy", "Allergies"], ["diagnosis", "Diagnoses"], ["clinician", "Doctor's notes"], ["measurement", "Readings"], ["followup", "Follow-ups"], ["pattern", "Patterns"], ["review", "Doctor reviews"]];
 
 export default function TimelinePage() {
   const session = useSession();

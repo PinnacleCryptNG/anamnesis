@@ -3,6 +3,7 @@ import { completeJson } from "@/lib/llm";
 import { asLines, numbered, recallMany, today } from "@/lib/memory";
 import { recordCtx } from "@/lib/record";
 import { normalizeSnapshot, SNAPSHOT_SYSTEM } from "@/lib/clinical";
+import { dropAddressed } from "@/lib/reviews";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -15,6 +16,7 @@ const QUERIES = [
   "most recent doctor visit and instructions",
   "follow-ups, tests due and referrals",
   "recent symptoms",
+  "doctor reviews: marked addressed or keep watching",
 ];
 
 export async function GET(req: Request) {
@@ -25,6 +27,8 @@ export async function GET(req: Request) {
     if (!entries.length) return NextResponse.json({ snapshot: null, sources: [], recent: [], count: 0 });
     const sources = numbered(entries);
     const snapshot = normalizeSnapshot(await completeJson<unknown>(SNAPSHOT_SYSTEM, `Today is ${today()}. Only call something due, overdue or "today" by comparing its date with today.\n\nRecord:\n${asLines(sources)}`, 1600));
+    snapshot.watch = dropAddressed(snapshot.watch, sources);
+    snapshot.followups = dropAddressed(snapshot.followups, sources);
     return NextResponse.json({ snapshot, sources, recent: sources.slice(0, 5), count: entries.length });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 502 });
