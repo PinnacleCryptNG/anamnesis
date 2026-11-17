@@ -17,7 +17,7 @@ function ai() {
 
 export type Img = { mediaType: "image/jpeg" | "image/png" | "image/webp"; data: string };
 
-async function gemini(system: string, user: string, maxTokens: number, images: Img[]): Promise<string> {
+async function gemini(system: string, user: string, maxTokens: number, images: Img[], json = false): Promise<string> {
   const body = JSON.stringify({
     systemInstruction: { parts: [{ text: system }] },
     contents: [
@@ -26,7 +26,7 @@ async function gemini(system: string, user: string, maxTokens: number, images: I
         parts: [...images.map((im) => ({ inlineData: { mimeType: im.mediaType, data: im.data } })), { text: user }],
       },
     ],
-    generationConfig: { maxOutputTokens: Math.max(maxTokens, 8192) },
+    generationConfig: { maxOutputTokens: Math.max(maxTokens, 8192), ...(json ? { responseMimeType: "application/json" } : {}) },
   });
   let last = "";
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -69,12 +69,8 @@ export async function complete(system: string, user: string, maxTokens = 1800, i
 }
 
 export async function completeJson<T>(system: string, user: string, maxTokens = 1800, images: Img[] = []): Promise<T> {
-  const text = await complete(
-    system + "\n\nRespond with a single JSON object only. No prose, no code fences.",
-    user,
-    maxTokens,
-    images,
-  );
+  const sys = system + "\n\nRespond with a single JSON object only. No prose, no code fences.";
+  const text = GEMINI ? await gemini(sys, user, maxTokens, images, true) : await complete(sys, user, maxTokens, images);
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start < 0 || end < 0) throw new Error("Model did not return JSON");
