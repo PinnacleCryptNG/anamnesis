@@ -2,7 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 
 const KEY = process.env.LLM_API_KEY;
-const GEMINI = !!KEY?.startsWith("AIza");
+const GEMINI = process.env.LLM_PROVIDER === "google" || /^(AIza|AQ\.)/.test(KEY ?? "");
 const MODEL = process.env.LLM_MODEL || "claude-sonnet-4-6";
 const GEMINI_MODELS = process.env.LLM_MODEL ? [process.env.LLM_MODEL] : ["gemini-3-flash-preview", "gemini-3.1-flash-lite"];
 let anthropic: Anthropic | null = null;
