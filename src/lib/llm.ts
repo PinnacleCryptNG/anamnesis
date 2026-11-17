@@ -26,7 +26,7 @@ async function gemini(system: string, user: string, maxTokens: number, images: I
         parts: [...images.map((im) => ({ inlineData: { mimeType: im.mediaType, data: im.data } })), { text: user }],
       },
     ],
-    generationConfig: { maxOutputTokens: Math.max(maxTokens, 8192), ...(json ? { responseMimeType: "application/json" } : {}) },
+    generationConfig: { maxOutputTokens: Math.max(maxTokens * 4, 16384), thinkingConfig: { thinkingLevel: "low" }, ...(json ? { responseMimeType: "application/json" } : {}) },
   });
   let last = "";
   for (let attempt = 0; attempt < 3; attempt++) {
